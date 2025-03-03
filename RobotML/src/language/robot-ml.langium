@@ -85,9 +85,6 @@ TypeRule returns string:
 DirectionRule returns string:
     'Forward' | 'Backward' | 'Left' | 'Right';
 
-MovementUnitRule returns string:
-    'mm' | 'cm';
-
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
 hidden terminal WS: /\s+/;
