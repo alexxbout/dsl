@@ -4,8 +4,11 @@ entry DSLProgramRule:
     {DSLProgram} (functions+=FunctionRule)*;
 
 FunctionRule:
-    {FunctionDef} 'let' returnType=TypeRule name=ID '(' ')'
+    {FunctionDef} 'let' returnType=TypeRule name=ID '(' (params+=ParamFunRule (',' params+=ParamFunRule)*)? ')'
     block=BlockRule;
+
+ParamFunRule:
+    {VariableFunDecl} type=TypeRule name=ID;
 
 BlockRule:
     {Block} '{' (statements+=StatementRule)* '}';
@@ -14,7 +17,7 @@ StatementRule returns Statement:
     VariableAssignRule | VariableDeclRule | ReturnRule | LoopRule | CommandRule | FunctionCallRule;
 
 ExpressionRule returns Expression:
-    BooleanExprRule | ArithmeticExprRule | PrimaryExprRule;
+    BooleanExprRule | ArithmeticExprRule | PrimaryExprRule | CastRule;
 
 PrimaryExprRule returns Expression:
     VariableRefRule | LiteralRule | FunctionCallRule;
@@ -38,10 +41,7 @@ BooleanLiteralRule:
     {BooleanLiteral} value?="value";
 
 FunctionCallRule:
-    {FunctionCall} function=[FunctionRule:ID] '(' (args+=FunctionArgRule (',' args+=FunctionArgRule)*)? ')'?;
-
-FunctionArgRule returns Expression:
-    {UnitValue} value=ExpressionRule 'in' unit=MovementUnitRule | ExpressionRule;
+    {FunctionCall} function=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
 
 VariableAssignRule:
     {VariableAssign} name=ID '=' value=ExpressionRule;
@@ -56,25 +56,22 @@ LoopRule:
     {Loop} 'loop' condition=ExpressionRule block=BlockRule;
 
 CommandRule:
-    SpeedRule | RotationRule | MovementRule | ForwardRule | ClockRule;
+    SpeedRule | ClockRule | MovementRule;
 
-ForwardRule:
-    {Forward} 'Forward' distance=INT 'in' unit=MovementUnitRule;
+MovementRule returns Movement:
+    {Movement} direction=DirectionRule value=ExpressionRule;
 
 ClockRule:
-    {Clock} 'Clock' angle=INT;
+    {Clock} 'Clock' sign=SignRule? angle=INT;
 
 SpeedRule:
-    {Speed} 'setSpeed' '(' value=FunctionArgRule ')'?;
-
-RotationRule:
-    {Rotation} 'rotate' angle=ExpressionRule;
-
-MovementRule:
-    {Movement} 'move' value=ExpressionRule unit=MovementUnitRule direction=MovementDirRule;
+    {Speed} 'setSpeed' '(' value=ExpressionRule ')'?;
 
 SignRule returns string:
     '+' | '-';
+
+CastRule returns Cast:
+    {Cast} value=(ArithmeticExprRule | PrimaryExprRule) 'in' type=TypeRule;
 
 ArithmeticOpRule returns string:
     '+' | '-' | '*' | '/' | '%';
@@ -85,8 +82,8 @@ ComparatorRule returns string:
 TypeRule returns string:
     'cm' | 'mm' | 'number' | 'void' | 'boolean';
 
-MovementDirRule returns string:
-    'FORWARD' | 'BACKWARD' | 'LEFT' | 'RIGHT';
+DirectionRule returns string:
+    'Forward' | 'Backward' | 'Left' | 'Right';
 
 MovementUnitRule returns string:
     'mm' | 'cm';
@@ -104,6 +101,7 @@ interface FunctionDef {
     name: string;
     returnType: string;
     block: Block;
+    params: VariableFunDecl[];
 }
 
 interface Block {
@@ -188,6 +186,7 @@ interface Forward extends Command {
 
 interface Clock extends Command {
     angle: number;
+    sign?: string;
 }
 
 interface Speed extends Command {
@@ -200,10 +199,19 @@ interface Rotation extends Command {
 
 interface Movement extends Command {
     value: Expression;
-    unit: string;
     direction: string;
 }
 
 interface Comment extends Statement {
     text: string[];
+}
+
+interface VariableFunDecl extends Statement {
+    name: string;
+    type: string;
+}
+
+interface Cast extends Statement {
+    value: Expression;
+    type: string;
 }
