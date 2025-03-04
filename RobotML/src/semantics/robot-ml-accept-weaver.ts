@@ -4,11 +4,11 @@
  ******************************************************************************/
 
 import { AstNode, AstUtils, ContextCache, DocumentState, LangiumCoreServices } from 'langium';
+import { DiagnosticSeverity } from 'vscode-languageserver';
 import type { RobotMlAstType } from '../language/generated/ast.js';
 import * as InterfaceAST from '../language/generated/ast.js';
-import * as ClassAST from './robot-ml-visitor.js';
-import { RobotMlVisitor } from './robot-ml-visitor.js';
-import { DiagnosticSeverity } from 'vscode-languageserver';
+import * as ClassAST from '../language/robot-ml-visitor.js';
+import { RobotMlVisitor } from '../language/robot-ml-visitor.js';
 
 
 type Weaver = {

@@ -2,8 +2,9 @@ import { inject, type Module } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { RobotMLInterpreter } from '../semantics/interpreter.js';
 import { RobotMlAcceptWeaver } from '../semantics/robot-ml-accept-weaver.js';
+import { RobotMlTypeChecker } from '../semantics/type-checker.js';
 import { RobotMlGeneratedModule, RobotMlGeneratedSharedModule } from './generated/module.js';
-import { RobotMlValidator, registerValidationChecks } from './robot-ml-validator.js';
+import { registerValidationChecks, RobotMlValidator } from './robot-ml-validator.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -13,6 +14,7 @@ export type RobotMlAddedServices = {
         RobotMlValidator: RobotMlValidator
         RobotMlAcceptWeaver: RobotMlAcceptWeaver
         RobotMlInterpreter: RobotMLInterpreter
+        RobotMlTypeChecker: RobotMlTypeChecker
     }
 }
 
@@ -31,7 +33,8 @@ export const RobotMlModule: Module<RobotMlServices, PartialLangiumServices & Rob
     visitors: {
         RobotMlValidator: () => new RobotMlValidator(),
         RobotMlAcceptWeaver: (services) => new RobotMlAcceptWeaver(services),
-        RobotMlInterpreter: () => new RobotMLInterpreter()
+        RobotMlInterpreter: () => new RobotMLInterpreter(),
+        RobotMlTypeChecker: () => new RobotMlTypeChecker()
     }
 };
 
@@ -64,7 +67,11 @@ export function createRobotMlServices(context: DefaultSharedModuleContext): {
         RobotMlModule
     );
     shared.ServiceRegistry.register(RobotMl);
+
+    RobotMl.visitors.RobotMlAcceptWeaver;
+
     registerValidationChecks(RobotMl);
+    
     if (!context.connection) {
         // We don't run inside a language server
         // Therefore, initialize the configuration provider instantly
