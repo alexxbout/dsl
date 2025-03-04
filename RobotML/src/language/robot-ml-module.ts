@@ -1,5 +1,7 @@
-import { type Module, inject } from 'langium';
+import { inject, type Module } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
+import { RobotMLInterpreter } from '../semantics/interpreter.js';
+import { RobotMlAcceptWeaver } from '../semantics/robot-ml-accept-weaver.js';
 import { RobotMlGeneratedModule, RobotMlGeneratedSharedModule } from './generated/module.js';
 import { RobotMlValidator, registerValidationChecks } from './robot-ml-validator.js';
 
@@ -7,8 +9,10 @@ import { RobotMlValidator, registerValidationChecks } from './robot-ml-validator
  * Declaration of custom services - add your own service classes here.
  */
 export type RobotMlAddedServices = {
-    validation: {
+    visitors: {
         RobotMlValidator: RobotMlValidator
+        RobotMlAcceptWeaver: RobotMlAcceptWeaver
+        RobotMlInterpreter: RobotMLInterpreter
     }
 }
 
@@ -24,8 +28,10 @@ export type RobotMlServices = LangiumServices & RobotMlAddedServices
  * selected services, while the custom services must be fully specified.
  */
 export const RobotMlModule: Module<RobotMlServices, PartialLangiumServices & RobotMlAddedServices> = {
-    validation: {
-        RobotMlValidator: () => new RobotMlValidator()
+    visitors: {
+        RobotMlValidator: () => new RobotMlValidator(),
+        RobotMlAcceptWeaver: (services) => new RobotMlAcceptWeaver(services),
+        RobotMlInterpreter: () => new RobotMLInterpreter()
     }
 };
 
