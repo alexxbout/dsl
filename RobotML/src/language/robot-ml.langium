@@ -17,13 +17,13 @@ StatementRule returns Statement:
     VariableAssignRule | VariableDeclRule | ReturnRule | LoopRule | CommandRule | FunctionCallRule;
 
 ExpressionRule returns Expression:
-    BooleanExprRule | ArithmeticExprRule | PrimaryExprRule | CastRule;
+    LogicalExprRule | CastRule;
 
 PrimaryExprRule returns Expression:
     VariableRefRule | LiteralRule | FunctionCallRule;
 
 BooleanExprRule returns Expression:
-    {BooleanExpr} left=ArithmeticExprRule comparator=ComparatorRule right=ArithmeticExprRule;
+    {BooleanExpr} left=ArithmeticExprRule comparator=ComparatorRule right=ArithmeticExprRule | ArithmeticExprRule;
 
 ArithmeticExprRule returns Expression:
     {BinaryOperation} left=PrimaryExprRule operator=ArithmeticOpRule right=ExpressionRule | PrimaryExprRule;
@@ -87,6 +87,12 @@ DirectionRule returns string:
 
 BooleanRule returns boolean:
     'true' | 'false';
+
+LogicalExprRule returns Expression:
+    {LogicalExpr} left=BooleanExprRule operator=LogicalOpRule right=LogicalExprRule | BooleanExprRule;
+
+LogicalOpRule returns string:
+    'and' | 'or';
 
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
@@ -214,4 +220,10 @@ interface VariableFunDecl extends Statement, AbstractVariableDecl {
 interface Cast extends Statement {
     value: Expression;
     type: string;
+}
+
+interface LogicalExpr extends Expression {
+    left: Expression;
+    operator: string;
+    right: Expression;
 }
