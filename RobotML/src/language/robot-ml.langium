@@ -41,7 +41,7 @@ BooleanLiteralRule:
     {BooleanLiteral} value=BooleanRule;
 
 FunctionCallRule:
-    {FunctionCall} function=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
+    {FunctionCall} func=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
 
 VariableAssignRule:
     {VariableAssign} variable=[AbstractVariableDecl:ID] '=' value=ExpressionRule;
@@ -165,7 +165,7 @@ interface UnitValue extends Expression {
 }
 
 interface FunctionCall extends Expression, Statement {
-    function: @FunctionDef;
+    func: @FunctionDef;
     args: Expression[];
 }
 
