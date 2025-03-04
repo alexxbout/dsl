@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "langium-visitor": "^1.3.0"
+  }
+}

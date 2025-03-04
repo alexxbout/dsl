@@ -4,7 +4,7 @@ entry DSLProgramRule:
     {DSLProgram} (functions+=FunctionRule)*;
 
 FunctionRule:
-    {FunctionDef} 'let' returnType=TypeRule name=ID '(' (params+=ParamFunRule (',' params+=ParamFunRule)*)? ')'
+    {FunctionDef} 'let' returnType=(TypeRule | 'void') name=ID '(' (params+=ParamFunRule (',' params+=ParamFunRule)*)? ')'
     block=BlockRule;
 
 ParamFunRule:
@@ -38,7 +38,7 @@ NumberLiteralRule:
     {NumberLiteral} (sign=SignRule)? value=INT;
 
 BooleanLiteralRule:
-    {BooleanLiteral} value?="value";
+    {BooleanLiteral} value=BooleanRule;
 
 FunctionCallRule:
     {FunctionCall} function=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
@@ -62,7 +62,7 @@ MovementRule returns Movement:
     {Movement} direction=DirectionRule value=ExpressionRule;
 
 ClockRule:
-    {Clock} 'Clock' sign=SignRule? angle=INT;
+    {Clock} 'Clock' sign=SignRule? angle=ExpressionRule;
 
 SpeedRule:
     {Speed} 'setSpeed' '(' value=ExpressionRule ')'?;
@@ -80,10 +80,13 @@ ComparatorRule returns string:
     '<' | '<=' | '>' | '>=' | '=' | '!=';
 
 TypeRule returns string:
-    'cm' | 'mm' | 'number' | 'void' | 'boolean';
+    'cm' | 'mm' | 'number' | 'boolean';
 
 DirectionRule returns string:
     'Forward' | 'Backward' | 'Left' | 'Right';
+
+BooleanRule returns boolean:
+    'true' | 'false';
 
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
@@ -182,7 +185,7 @@ interface Forward extends Command {
 }
 
 interface Clock extends Command {
-    angle: number;
+    angle: Expression;
     sign?: string;
 }
 
