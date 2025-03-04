@@ -20,7 +20,7 @@ ExpressionRule returns Expression:
     LogicalExprRule | CastRule;
 
 PrimaryExprRule returns Expression:
-    VariableRefRule | LiteralRule | FunctionCallRule;
+    VariableRefRule | LiteralRule | FunctionCallRule | ParenExprRule;
 
 BooleanExprRule returns Expression:
     {BooleanExpr} left=ArithmeticExprRule comparator=ComparatorRule right=ArithmeticExprRule | ArithmeticExprRule;
@@ -77,7 +77,7 @@ ArithmeticOpRule returns string:
     '+' | '-' | '*' | '/' | '%';
 
 ComparatorRule returns string:
-    '<' | '<=' | '>' | '>=' | '=' | '!=';
+    '<' | '<=' | '>' | '>=' | '==' | '!=';
 
 TypeRule returns string:
     'cm' | 'mm' | 'number' | 'boolean';
@@ -93,6 +93,9 @@ LogicalExprRule returns Expression:
 
 LogicalOpRule returns string:
     'and' | 'or';
+
+ParenExprRule:
+    {ParenExpr} '(' expr=ExpressionRule ')';
 
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
