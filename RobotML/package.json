@@ -75,7 +75,7 @@
                     "robot-ml"
                 ],
                 "extensions": [
-                    ".galettesaucisses"
+                    ".bzh"
                 ],
                 "configuration": "./language-configuration.json"
             }

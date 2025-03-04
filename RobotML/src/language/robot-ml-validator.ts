@@ -18,7 +18,6 @@ export function registerValidationChecks(services: RobotMlServices) {
             validator.checkUniqueParameterNames
         ],
         FunctionCall: [
-            validator.checkFunctionCallDeclared,
             validator.checkFunctionCallArgCount
         ],
         VariableDecl: validator.checkVariableType
@@ -76,7 +75,7 @@ export class RobotMlValidator {
     /**
      * Vérifie que le nom de la fonction n'est pas déjà utilisé.
      * @param functionDef 
-     * @param accept 
+     * @param accept  
      */
     checkFunctionNameUnique(functionDef: FunctionDef, accept: ValidationAcceptor): void {
         const container = functionDef.$container;
@@ -94,18 +93,6 @@ export class RobotMlValidator {
     }
 
     /**
-     * Vérifie que les appels de fonction sont déclarés.
-     * 
-     * @param functionCall 
-     * @param accept 
-     */
-    checkFunctionCallDeclared(functionCall: FunctionCall, accept: ValidationAcceptor): void {
-        if (functionCall.function && !functionCall.function.ref) {
-            accept('error', 'Function call must be declared.', { node: functionCall });
-        }
-    }
-
-    /**
      * Vérifie que le nombre d'arguments d'un appel de fonction correspond
      * au nombre de paramètres déclarés dans la définition de la fonction.
      * 
@@ -115,7 +102,6 @@ export class RobotMlValidator {
     checkFunctionCallArgCount(functionCall: FunctionCall, accept: ValidationAcceptor): void {
         const funcDef = functionCall.function.ref;
         if (funcDef) {
-            accept('info', `Function call: ${funcDef.name}`, { node: functionCall });
             const funcDefParams = funcDef.params;
             if (functionCall.args.length !== funcDefParams.length) {
                 accept('error', `Function call '${funcDef.name}' expects ${funcDefParams.length} argument(s), but got ${functionCall.args.length}.`, { node: functionCall });

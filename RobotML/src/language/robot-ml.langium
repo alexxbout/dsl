@@ -8,7 +8,7 @@ FunctionRule:
     block=BlockRule;
 
 ParamFunRule:
-    {VariableFunDecl} type=TypeRule name=ID;
+    {VariableFunDecl} type=TypeRule name=ID ;
 
 BlockRule:
     {Block} '{' (statements+=StatementRule)* '}';
@@ -29,7 +29,7 @@ ArithmeticExprRule returns Expression:
     {BinaryOperation} left=PrimaryExprRule operator=ArithmeticOpRule right=ExpressionRule | PrimaryExprRule;
 
 VariableRefRule:
-    {Variable} ref=[VariableDeclRule:ID];
+    {Variable} ref=[AbstractVariableDecl:ID];
 
 LiteralRule:
     NumberLiteralRule | BooleanLiteralRule;
@@ -44,7 +44,7 @@ FunctionCallRule:
     {FunctionCall} function=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
 
 VariableAssignRule:
-    {VariableAssign} name=ID '=' value=ExpressionRule;
+    {VariableAssign} variable=[AbstractVariableDecl:ID] '=' value=ExpressionRule;
 
 VariableDeclRule:
     {VariableDecl} 'var' type=TypeRule name=ID ('=' expr=ExpressionRule)?;
@@ -91,7 +91,6 @@ BooleanRule returns boolean:
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
 hidden terminal WS: /\s+/;
-hidden terminal CR: /\r/;
 
 interface DSLProgram {
     functions: FunctionDef[];
@@ -114,8 +113,13 @@ interface Expression {
 interface Statement {
 }
 
+interface AbstractVariableDecl {
+    name: string;
+    type: string;
+}
+
 interface Variable extends Expression {
-    ref: @VariableDecl;
+    ref: @AbstractVariableDecl;
 }
 
 interface ParenExpr extends Expression {
@@ -157,13 +161,11 @@ interface FunctionCall extends Expression, Statement {
 }
 
 interface VariableAssign extends Statement {
-    name: string;
+    variable: @AbstractVariableDecl;
     value: Expression;
 }
 
-interface VariableDecl extends Statement {
-    name: string;
-    type: string;
+interface VariableDecl extends Statement, AbstractVariableDecl {
     expr?: Expression;
 }
 
@@ -206,9 +208,7 @@ interface Comment extends Statement {
     text: string[];
 }
 
-interface VariableFunDecl extends Statement {
-    name: string;
-    type: string;
+interface VariableFunDecl extends Statement, AbstractVariableDecl {
 }
 
 interface Cast extends Statement {

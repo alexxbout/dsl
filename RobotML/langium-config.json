@@ -3,7 +3,7 @@
     "languages": [{
         "id": "robot-ml",
         "grammar": "src/language/robot-ml.langium",
-        "fileExtensions": [".galettesaucisses"],
+        "fileExtensions": [".bzh"],
         "textMate": {
             "out": "syntaxes/robot-ml.tmLanguage.json"
         },
