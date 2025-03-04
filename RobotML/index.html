@@ -1,22 +1,74 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <meta charset='utf-8'>
+        <!-- Page & Monaco styling -->
+        <link href="static/styles.css" rel="stylesheet"/>
+        <title>RoboML in Langium</title>
+    </head>
+    <body>
+        <main>
+            <h1>RoboML in Langium</h1>
+            <div id="buttons">
+                <input class="build" type="button" value="Parse and Validate" onclick="window.parseAndValidate()">
+                <input class="build" type="button" value="Execute Simulation" onclick="window.execute()">
+                <input class="build" type="button" value="Restart Simulation" onclick="window.resetSimulation()">
+                <input class="build" type="button" value="Clear Data" onclick="window.setup()">
+            </div>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Langium Web</title>
-    <link href="./static/styles.css" rel="stylesheet"/>
-</head>
+            <div id="page-wrapper">
+                <div class="editor">
+                    <div class="wrapper">
+                        <!-- Monaco Root -->
+                        <div id="monaco-editor-root"></div>
+                    </div>
+                </div>
+                <div class="simulator" id="simulator-wrapper">
+                    <canvas id="simulator"></canvas>
+                </div>
+            </div>
 
-<body>
-    <div style="padding: 5px">
-        <h1>RobotML in Langium</h1>
-        Please select which grammar definition you want to use with monaco-editor:
-        <br>
-        <a href="./static/monacoClassic.html">RobotML + Monarch (Classic monaco-editor config)</a>
-        <br>
-        <a href="./static/monacoExtended.html">RobotML + Textmate (Extended Vscode Extension Config)</a>
-    </div>
-</body>
+            <div id="errorModal" class="modal">
+                <!-- Modal content -->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="close">&times;</span>
+                        <h2>RoboML Type checking errors</h2>
+                    </div>
+                    <div class="modal-body"></div>
+                </div>
+            </div>
 
+            <div id="validModal" class="modal">
+                <!-- Modal content -->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <span class="close">&times;</span>
+                        <h2>RoboML Type checking validation</h2>
+                    </div>
+                    <div class="modal-body">
+                        Your code is correctly typed.
+                    </div>
+                </div>
+            </div>
+            
+            <footer>
+                <p style="font-style:italic">Powered by</p>
+                <img width="125" src="https://langium.org/assets/langium_logo_w_nib.svg" alt="Langium">
+            </footer>
+    </main>
+    </body>
+    <script type="module">
+        // vite is used to resolve the included TypeScript files
+        import '../interpreter/src/web/lib/block'
+        import '../interpreter/src/web/lib/robot'
+        import '../interpreter/src/web/lib/wall'
+        import '../interpreter/src/web/lib/sketch'
+        import { configureMonacoWorkers } from './src/setupCommon';
+        import { executeClassic } from './src/setupClassic';
+
+        configureMonacoWorkers();
+        // keep a reference to a promise for when the editor is finished starting, we'll use this to setup the canvas on load
+        const startingPromise = executeClassic(document.getElementById('monaco-editor-root'));
+    </script>
 </html>
