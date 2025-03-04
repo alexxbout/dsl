@@ -100,7 +100,7 @@ export class RobotMlValidator {
      * @param accept 
      */
     checkFunctionCallArgCount(functionCall: FunctionCall, accept: ValidationAcceptor): void {
-        const funcDef = functionCall.function.ref;
+        const funcDef = functionCall.func.ref;
         if (funcDef) {
             const funcDefParams = funcDef.params;
             if (functionCall.args.length !== funcDefParams.length) {
