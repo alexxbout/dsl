@@ -56,7 +56,7 @@ LoopRule:
     {Loop} 'loop' condition=ExpressionRule block=BlockRule;
 
 CommandRule:
-    SpeedRule | ClockRule | MovementRule;
+    SpeedRule | ClockRule | MovementRule | DistanceRule;
 
 MovementRule returns Movement:
     {Movement} direction=DirectionRule value=ExpressionRule;
@@ -66,6 +66,12 @@ ClockRule:
 
 SpeedRule:
     {Speed} 'setSpeed' '(' value=ExpressionRule ')'?;
+
+DistanceRule:
+    {Distance} 'getDistance()';
+
+TimestampRule:
+    {Timestamp} 'getTimestamp()';
 
 SignRule returns string:
     '+' | '-';
@@ -100,6 +106,8 @@ ParenExprRule:
 terminal ID: /[_a-zA-Z][\w_]*/;
 terminal INT returns number: /[0-9]+/;
 hidden terminal WS: /\s+/;
+hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
+hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
 
 interface DSLProgram {
     functions: FunctionDef[];
@@ -203,6 +211,10 @@ interface Clock extends Command {
 interface Speed extends Command {
     value: Expression;
 }
+
+interface Distance extends Command {}
+
+interface Timestamp extends Command {}
 
 interface Rotation extends Command {
     angle: Expression;

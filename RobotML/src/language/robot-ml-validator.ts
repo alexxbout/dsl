@@ -2,6 +2,7 @@ import type { ValidationAcceptor, ValidationChecks } from 'langium';
 import type { FunctionCall, FunctionDef, RobotMlAstType, Speed, VariableDecl } from './generated/ast.js';
 import { Cast, Clock, isCast, Movement } from './generated/ast.js';
 import type { RobotMlServices } from './robot-ml-module.js';
+import { registerVisitorAsValidator } from './robot-ml-visitor.js';
 
 /**
  * Register custom validation checks.
@@ -9,6 +10,8 @@ import type { RobotMlServices } from './robot-ml-module.js';
 export function registerValidationChecks(services: RobotMlServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.visitors.RobotMlValidator;
+    const typeChecker = services.visitors.RobotMlTypeChecker;
+
     const checks: ValidationChecks<RobotMlAstType> = {
         Movement: validator.checkMovementUnitCast,
         Clock: validator.checkClockNotCast,
@@ -22,7 +25,10 @@ export function registerValidationChecks(services: RobotMlServices) {
         ],
         VariableDecl: validator.checkVariableType
     };
+
     registry.register(checks, validator);
+
+    registerVisitorAsValidator(typeChecker, services);
 }
 
 /**

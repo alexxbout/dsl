@@ -3,8 +3,8 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 
-import * as ASTInterfaces from '../language/generated/ast.js';
 import { LangiumCoreServices, ValidationAcceptor, ValidationChecks } from 'langium';
+import * as ASTInterfaces from './generated/ast.js';
 
 /**
  * This interface is used to define the visitor methods for the RobotMl language.
@@ -46,7 +46,7 @@ export interface RobotMlVisitor {
  * It uses the Langium validator service under the hood and exposes its `accept` method through the `validationAccept` property.
  * This `validationAccept` property is reassigned each time the `visitRoot` method is called, so when Langium called the different validation checks.
  */
-export abstract class RobotMlValidationVisitor {
+export abstract class RobotMlValidationVisitor implements RobotMlVisitor {
 
     protected validationAccept: ValidationAcceptor = () => {};
 
