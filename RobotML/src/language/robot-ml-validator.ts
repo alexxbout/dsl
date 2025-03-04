@@ -8,7 +8,7 @@ import type { RobotMlServices } from './robot-ml-module.js';
  */
 export function registerValidationChecks(services: RobotMlServices) {
     const registry = services.validation.ValidationRegistry;
-    const validator = services.validation.RobotMlValidator;
+    const validator = services.visitors.RobotMlValidator;
     const checks: ValidationChecks<RobotMlAstType> = {
         Movement: validator.checkMovementUnitCast,
         Clock: validator.checkClockNotCast,
