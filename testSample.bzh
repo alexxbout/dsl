@@ -1,0 +1,91 @@
+// Test file demonstrating block scoping and variable shadowing
+
+let void main() {
+    // Test basic variable declarations
+    var boolean flag = true
+    var number count = 0
+    
+    // Test block scoping with variable shadowing
+    {
+        // This should be allowed - shadowing the outer 'flag' with a new variable
+        var number flag = 42
+        flag = flag + 1  // This should be fine (number + number)
+        
+        // Create a new variable only visible in this scope
+        var boolean localVar = false
+        
+        // Nested block with further scoping
+        {
+            var cm flag = 10 in cm  // Shadow again with a different type
+            Forward flag  // Should use the cm variable from this scope
+            
+            // This should work - using outer scope variable
+            count = count + 1
+        }
+        
+        // This should use the number flag, not the cm flag or boolean flag
+        flag = flag * 2
+    }
+    
+    // This should use the original boolean flag
+    if (flag) {
+        count = count + 1
+    }
+    
+    // Test variable redeclaration - this should cause an error
+    // Uncomment to test:
+    // var number count = 10
+    
+    // Test usage of a variable from an inner scope - this should cause an error
+    // Uncomment to test:
+    // localVar = true
+    
+    // Test type error with boolean/number mismatch
+    // Uncomment to test:
+    // flag = 5       // Error: Cannot assign number to boolean
+    // count = false  // Error: Cannot assign boolean to number
+}
+
+// Test function scope isolation
+let void testFunction() {
+    var number x = 10
+    
+    {
+        var boolean x = true  // Should be allowed - different scope
+        if (x) {              // Should use the boolean x
+            var cm x = 5 in cm  // Another level of shadowing
+            Forward x         // Should use the cm x
+        }
+    }
+    
+    x = x + 1  // Should use the number x from function scope
+}
+
+// Test returning from nested blocks
+let number blockReturn() {
+    var number result = 0
+    
+    {
+        // Can return from a nested block
+        if (result == 0) {
+            return 42
+        }
+    }
+    
+    // This should be flagged as unreachable if your type checker is advanced enough
+    return result
+}
+
+// Test loop with its own scope
+let void loopScoping() {
+    var number i = 0
+    
+    loop i < 5 {
+        var number value = i * 2
+        i = i + 1
+    }
+    
+    // This should cause an error - 'value' is not in scope
+    // Uncomment to test:
+    // value = 10
+}
