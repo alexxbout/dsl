@@ -136,14 +136,14 @@ export class RobotMlValidator {
      * @param accept 
      */
     checkVariableType(variableDecl: VariableDecl, accept: ValidationAcceptor): void {
-        if (variableDecl.expr && variableDecl.type) {
-            const exprType = (variableDecl.expr as any).$type;
-            if (exprType === 'NumberLiteral' && variableDecl.type !== 'number') {
-                accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a number literal.`, { node: variableDecl });
-            }
-            if (exprType === 'BooleanLiteral' && variableDecl.type !== 'boolean') {
-                accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a boolean literal.`, { node: variableDecl });
-            }
-        }
+        // if (variableDecl.expr && variableDecl.type) {
+        //     const exprType = (variableDecl.expr as any).$type;
+        //     if (exprType === 'NumberLiteral' && variableDecl.type !== 'number') {
+        //         accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a number literal.`, { node: variableDecl });
+        //     }
+        //     if (exprType === 'BooleanLiteral' && variableDecl.type !== 'boolean') {
+        //         accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a boolean literal.`, { node: variableDecl });
+        //     }
+        // }
     }
 }

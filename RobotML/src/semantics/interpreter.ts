@@ -1,5 +1,5 @@
 import * as ast from "../language/generated/ast.js";
-import { AbstractVariableDecl, BinaryOperation, Block, BooleanExpr, BooleanLiteral, Cast, Clock, Command, Comment, DSLProgram, Expression, Forward, FunctionCall, FunctionDef, Literal, LogicalExpr, Loop, Movement, NumberLiteral, ParenExpr, Return, RobotMlVisitor, Rotation, Speed, Statement, UnitValue, Variable, VariableAssign, VariableDecl, VariableFunDecl } from "../language/robot-ml-visitor.js";
+import { AbstractVariableDecl, BinaryOperation, Block, BooleanExpr, BooleanLiteral, Clock, Command, Comment, DSLProgram, Expression, Forward, FunctionCall, FunctionDef, Literal, LogicalExpr, Loop, Movement, NumberLiteral, ParenExpr, Return, RobotMlVisitor, Rotation, Speed, Statement, UnitValue, Variable, VariableAssign, VariableDecl, VariableFunDecl } from "../language/robot-ml-visitor.js";
 
 // Create environment and state objects for the interpreter
 interface Environment {
@@ -7,17 +7,53 @@ interface Environment {
     parent?: Environment;
 }
 
+// Mock simulator types for type safety
+interface SimulatorScene {
+    robot: SimulatorRobot;
+    entities: SimulatorEntity[];
+    timestamps: SimulatorTimestamp[];
+    time: number;
+    size: { x: number, y: number };
+}
+
+interface SimulatorRobot {
+    pos: { x: number, y: number };
+    rad: number;
+    speed: number;
+    turn(angle: number): void;
+    move(distance: number): void;
+    side(distance: number): void;
+    getRay(): SimulatorRay;
+}
+
+interface SimulatorRay {
+    intersect(entities: SimulatorEntity[]): { x: number, y: number } | undefined;
+}
+
+interface SimulatorEntity {
+    type: string;
+    pos: { x: number, y: number };
+}
+
+interface SimulatorTimestamp {
+    time: number;
+    pos: { x: number, y: number };
+    rad: number;
+    speed: number;
+}
+
 // Result of the interpreter, tracking robot commands for display/simulation
 export interface InterpreterResult {
     commands: RobotCommand[];
+    timestamps: SimulatorTimestamp[];
 }
 
 // Types of robot commands that can be executed
 export type RobotCommand = 
-    | { type: 'turn'; angle: number }
-    | { type: 'move'; distance: number; unit: string }
-    | { type: 'side'; distance: number; direction: 'left' | 'right' }
-    | { type: 'setSpeed'; value: number };
+    | { type: 'turn'; angle: number; timestamp: number }
+    | { type: 'move'; distance: number; unit: string; timestamp: number }
+    | { type: 'side'; distance: number; direction: 'left' | 'right'; timestamp: number }
+    | { type: 'setSpeed'; value: number; timestamp: number };
 
 export class RobotMLInterpreter implements RobotMlVisitor {
     // Global environment for variables and functions
@@ -26,11 +62,51 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     private functions: Map<string, FunctionDef> = new Map();
     private returnValue: any = undefined;
     
-    // Track robot commands
+    // Track robot commands and simulator state
     private commands: RobotCommand[] = [];
+    private scene: SimulatorScene;
+    private currentTime: number = 0;
     
     constructor() {
         this.currentEnv = this.globalEnv;
+        // Create a mock scene for now - in a real implementation, this would be initialized with the actual simulator
+        this.scene = this.createMockScene();
+    }
+
+    // Create a mock scene for testing
+    private createMockScene(): SimulatorScene {
+        const robot: SimulatorRobot = {
+            pos: { x: 500, y: 500 },
+            rad: 0,
+            speed: 30,
+            turn(angle: number) {
+                this.rad += angle * Math.PI / 180;
+            },
+            move(distance: number) {
+                this.pos.x += Math.cos(this.rad) * distance;
+                this.pos.y += Math.sin(this.rad) * distance;
+            },
+            side(distance: number) {
+                this.pos.x += Math.cos(this.rad + Math.PI/2) * distance;
+                this.pos.y += Math.sin(this.rad + Math.PI/2) * distance;
+            },
+            getRay() {
+                return {
+                    intersect(entities: SimulatorEntity[]) {
+                        // Mock implementation that always returns undefined (no obstacles)
+                        return undefined;
+                    }
+                };
+            }
+        };
+
+        return {
+            robot,
+            entities: [],
+            timestamps: [],
+            time: 0,
+            size: { x: 1000, y: 1000 }
+        };
     }
 
     // Create a new environment with the given parent
@@ -74,6 +150,18 @@ export class RobotMLInterpreter implements RobotMlVisitor {
 
     private castBlock(node: ast.Block): Block {
         return node as unknown as Block;
+    }
+
+    // Record a timestamp in the simulator
+    private recordTimestamp(): number {
+        this.currentTime += 1;
+        this.scene.timestamps.push({
+            time: this.currentTime,
+            pos: { ...this.scene.robot.pos },
+            rad: this.scene.robot.rad,
+            speed: this.scene.robot.speed
+        });
+        return this.currentTime;
     }
 
     visitAbstractVariableDecl(node: AbstractVariableDecl): any {
@@ -130,26 +218,31 @@ export class RobotMLInterpreter implements RobotMlVisitor {
 
     visitExpression(node: Expression): any {
         // Dispatch to the appropriate visitor method based on node type
-        if (node.$type === 'BinaryOperation') {
-            return this.visitBinaryOperation(node as BinaryOperation);
-        } else if (node.$type === 'BooleanExpr') {
-            return this.visitBooleanExpr(node as BooleanExpr);
-        } else if (node.$type === 'BooleanLiteral') {
-            return this.visitBooleanLiteral(node as BooleanLiteral);
-        } else if (node.$type === 'FunctionCall') {
-            return this.visitFunctionCall(node as FunctionCall);
-        } else if (node.$type === 'LogicalExpr') {
-            return this.visitLogicalExpr(node as LogicalExpr);
-        } else if (node.$type === 'NumberLiteral') {
-            return this.visitNumberLiteral(node as NumberLiteral);
-        } else if (node.$type === 'ParenExpr') {
-            return this.visitParenExpr(node as ParenExpr);
-        } else if (node.$type === 'UnitValue') {
-            return this.visitUnitValue(node as UnitValue);
-        } else if (node.$type === 'Variable') {
-            return this.visitVariable(node as Variable);
-        } else {
-            throw new Error(`Unknown expression type: ${node.$type}`);
+        const nodeType = node.$type as string;
+        switch (nodeType) {
+            case 'BinaryOperation':
+                return this.visitBinaryOperation(node as BinaryOperation);
+            case 'BooleanExpr':
+                return this.visitBooleanExpr(node as BooleanExpr);
+            case 'BooleanLiteral':
+                return this.visitBooleanLiteral(node as BooleanLiteral);
+            case 'FunctionCall':
+                return this.visitFunctionCall(node as FunctionCall);
+            case 'LogicalExpr':
+                return this.visitLogicalExpr(node as LogicalExpr);
+            case 'NumberLiteral':
+                return this.visitNumberLiteral(node as NumberLiteral);
+            case 'ParenExpr':
+                return this.visitParenExpr(node as ParenExpr);
+            case 'UnitValue':
+                return this.visitUnitValue(node as UnitValue);
+            case 'Variable':
+                return this.visitVariable(node as Variable);
+            case 'Cast':
+                // Handle Cast as a special case
+                return this.visitCast(node as any);
+            default:
+                throw new Error(`Unknown expression type: ${nodeType}`);
         }
     }
 
@@ -183,9 +276,9 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitFunctionCall(node: FunctionCall): any {
-        const func = this.functions.get(node.func.ref?.name || '');
+        const func = this.functions.get(node.functioncall.ref?.name || '');
         if (!func) {
-            throw new Error(`Function '${node.func.ref?.name}' not found`);
+            throw new Error(`Function '${node.functioncall.ref?.name}' not found`);
         }
 
         // Evaluate arguments
@@ -287,36 +380,44 @@ export class RobotMLInterpreter implements RobotMlVisitor {
 
     visitStatement(node: Statement): any {
         // Dispatch to the appropriate visitor method based on node type
-        if (node.$type === 'VariableDecl') {
-            return this.visitVariableDecl(node as VariableDecl);
-        } else if (node.$type === 'VariableAssign') {
-            return this.visitVariableAssign(node as VariableAssign);
-        } else if (node.$type === 'Return') {
-            return this.visitReturn(node as Return);
-        } else if (node.$type === 'Loop') {
-            return this.visitLoop(node as Loop);
-        } else if (node.$type === 'FunctionCall') {
-            return this.visitFunctionCall(node as FunctionCall);
-        } else if (node.$type === 'Clock') {
-            return this.visitClock(node as Clock);
-        } else if (node.$type === 'Forward') {
-            return this.visitForward(node as Forward);
-        } else if (node.$type === 'Movement') {
-            return this.visitMovement(node as Movement);
-        } else if (node.$type === 'Rotation') {
-            return this.visitRotation(node as Rotation);
-        } else if (node.$type === 'Speed') {
-            return this.visitSpeed(node as Speed);
-        } else if (node.$type === 'Comment') {
-            return this.visitComment(node as Comment);
-        } else if (node.$type === 'Cast') {
-            return this.visitCast(node as Cast);
-        } else {
-            throw new Error(`Unknown statement type: ${node.$type}`);
+        const nodeType = node.$type as string;
+        switch (nodeType) {
+            case 'VariableDecl':
+                return this.visitVariableDecl(node as VariableDecl);
+            case 'VariableAssign':
+                return this.visitVariableAssign(node as VariableAssign);
+            case 'Return':
+                return this.visitReturn(node as Return);
+            case 'Loop':
+                return this.visitLoop(node as Loop);
+            case 'FunctionCall':
+                return this.visitFunctionCall(node as FunctionCall);
+            case 'Clock':
+                return this.visitClock(node as Clock);
+            case 'Forward':
+                return this.visitForward(node as Forward);
+            case 'Movement':
+                return this.visitMovement(node as Movement);
+            case 'Rotation':
+                return this.visitRotation(node as Rotation);
+            case 'Speed':
+                return this.visitSpeed(node as Speed);
+            case 'Comment':
+                return this.visitComment(node as Comment);
+            case 'Cast':
+                return this.visitCast(node as any);
+            case 'Distance':
+                // Handle Distance command
+                return this.visitDistance(node as any);
+            case 'Timestamp':
+                // Handle Timestamp command
+                return this.visitTimestamp(node as any);
+            default:
+                throw new Error(`Unknown statement type: ${nodeType}`);
         }
     }
 
-    visitCast(node: Cast): any {
+    visitCast(node: any): any {
         const value = this.visitExpression(this.castExpression(node.value));
         // Perform type conversion as needed based on the target type
         switch (node.type) {
@@ -325,9 +426,17 @@ export class RobotMLInterpreter implements RobotMlVisitor {
             case 'boolean':
                 return Boolean(value);
             case 'cm':
+                // Convert mm to cm if the value has a unit
+                if (typeof value === 'object' && value.unit === 'mm') {
+                    return { value: value.value / 10, unit: 'cm' };
+                }
+                return { value: Number(value), unit: 'cm' };
             case 'mm':
-                // Assuming unit conversion logic here
-                return { value: Number(value), unit: node.type };
+                // Convert cm to mm if the value has a unit
+                if (typeof value === 'object' && value.unit === 'cm') {
+                    return { value: value.value * 10, unit: 'mm' };
+                }
+                return { value: Number(value), unit: 'mm' };
             default:
                 throw new Error(`Unknown cast type: ${node.type}`);
         }
@@ -335,18 +444,26 @@ export class RobotMLInterpreter implements RobotMlVisitor {
 
     visitCommand(node: Command): any {
         // Base command - dispatch to specific command types
-        if (node.$type === 'Clock') {
-            return this.visitClock(node as Clock);
-        } else if (node.$type === 'Forward') {
-            return this.visitForward(node as Forward);
-        } else if (node.$type === 'Movement') {
-            return this.visitMovement(node as Movement);
-        } else if (node.$type === 'Rotation') {
-            return this.visitRotation(node as Rotation);
-        } else if (node.$type === 'Speed') {
-            return this.visitSpeed(node as Speed);
-        } else {
-            throw new Error(`Unknown command type: ${node.$type}`);
+        const nodeType = node.$type as string;
+        switch (nodeType) {
+            case 'Clock':
+                return this.visitClock(node as Clock);
+            case 'Forward':
+                return this.visitForward(node as Forward);
+            case 'Movement':
+                return this.visitMovement(node as Movement);
+            case 'Rotation':
+                return this.visitRotation(node as Rotation);
+            case 'Speed':
+                return this.visitSpeed(node as Speed);
+            case 'Distance':
+                // Handle Distance command
+                return this.visitDistance(node as any);
+            case 'Timestamp':
+                // Handle Timestamp command
+                return this.visitTimestamp(node as any);
+            default:
+                throw new Error(`Unknown command type: ${nodeType}`);
         }
     }
 
@@ -355,19 +472,34 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         const sign = node.sign || '+';
         const finalAngle = sign === '-' ? -angle : angle;
         
+        // Update the simulator
+        this.scene.robot.turn(finalAngle);
+        const timestamp = this.recordTimestamp();
+        
         // Record the robot command
-        this.commands.push({ type: 'turn', angle: finalAngle });
+        this.commands.push({ type: 'turn', angle: finalAngle, timestamp });
         
         console.log(`[Robot] Clock ${sign}${angle} (turns by ${finalAngle} degrees)`);
         return undefined;
     }
 
     visitForward(node: Forward): any {
+        // Convert to mm for the simulator
+        let distance = node.distance;
+        if (node.unit === 'cm') {
+            distance *= 10; // Convert cm to mm
+        }
+        
+        // Update the simulator
+        this.scene.robot.move(distance);
+        const timestamp = this.recordTimestamp();
+        
         // Record the robot command
         this.commands.push({ 
             type: 'move', 
             distance: node.distance, 
-            unit: node.unit 
+            unit: node.unit,
+            timestamp
         });
         
         console.log(`[Robot] Forward ${node.distance}${node.unit}`);
@@ -375,35 +507,75 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitMovement(node: Movement): any {
-        const value = this.visitExpression(this.castExpression(node.value));
+        const valueObj = this.visitExpression(this.castExpression(node.value));
+        
+        // Extract value and unit from the cast result
+        let value = typeof valueObj === 'object' ? valueObj.value : valueObj;
+        let unit = typeof valueObj === 'object' ? valueObj.unit : 'mm';
+        
+        // Convert to mm for the simulator if needed
+        let distanceInMm = value;
+        if (unit === 'cm') {
+            distanceInMm = value * 10;
+        }
+        
+        const timestamp = this.recordTimestamp();
         
         // Handle different directions
         switch (node.direction) {
             case 'Forward':
-                this.commands.push({ type: 'move', distance: value, unit: 'mm' });
+                this.scene.robot.move(distanceInMm);
+                this.commands.push({ 
+                    type: 'move', 
+                    distance: value, 
+                    unit, 
+                    timestamp 
+                });
                 break;
             case 'Backward':
-                this.commands.push({ type: 'move', distance: -value, unit: 'mm' });
+                this.scene.robot.move(-distanceInMm);
+                this.commands.push({ 
+                    type: 'move', 
+                    distance: -value, 
+                    unit, 
+                    timestamp 
+                });
                 break;
             case 'Left':
-                this.commands.push({ type: 'side', distance: value, direction: 'left' });
+                this.scene.robot.side(distanceInMm);
+                this.commands.push({ 
+                    type: 'side', 
+                    distance: value, 
+                    direction: 'left', 
+                    timestamp 
+                });
                 break;
             case 'Right':
-                this.commands.push({ type: 'side', distance: value, direction: 'right' });
+                this.scene.robot.side(-distanceInMm);
+                this.commands.push({ 
+                    type: 'side', 
+                    distance: value, 
+                    direction: 'right', 
+                    timestamp 
+                });
                 break;
             default:
                 throw new Error(`Unknown direction: ${node.direction}`);
         }
         
-        console.log(`[Robot] ${node.direction} ${value}`);
+        console.log(`[Robot] ${node.direction} ${value}${unit}`);
         return undefined;
     }
 
     visitRotation(node: Rotation): any {
         const angle = this.visitExpression(this.castExpression(node.angle));
         
+        // Update the simulator
+        this.scene.robot.turn(angle);
+        const timestamp = this.recordTimestamp();
+        
         // Record the robot command
-        this.commands.push({ type: 'turn', angle });
+        this.commands.push({ type: 'turn', angle, timestamp });
         
         console.log(`[Robot] Rotate ${angle} degrees`);
         return undefined;
@@ -412,11 +584,37 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     visitSpeed(node: Speed): any {
         const value = this.visitExpression(this.castExpression(node.value));
         
+        // Update the simulator
+        this.scene.robot.speed = value;
+        const timestamp = this.recordTimestamp();
+        
         // Record the robot command
-        this.commands.push({ type: 'setSpeed', value });
+        this.commands.push({ type: 'setSpeed', value, timestamp });
         
         console.log(`[Robot] Set speed to ${value}`);
         return undefined;
+    }
+
+    visitDistance(node: any): any {
+        // Get the distance from the robot's ray
+        const ray = this.scene.robot.getRay();
+        const intersection = ray.intersect(this.scene.entities);
+        
+        if (intersection) {
+            // Calculate distance using Pythagorean theorem
+            const dx = this.scene.robot.pos.x - intersection.x;
+            const dy = this.scene.robot.pos.y - intersection.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            console.log(`[Robot] Distance: ${distance}mm`);
+            return distance;
+        }
+        
+        console.log(`[Robot] No obstacle detected`);
+        return Infinity;
+    }
+
+    visitTimestamp(node: any): any {
+        return this.currentTime;
     }
 
     visitComment(node: Comment): any {
@@ -459,12 +657,15 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         this.functions = new Map();
         this.returnValue = undefined;
         this.commands = [];
+        this.scene = this.createMockScene();
+        this.currentTime = 0;
 
         this.visitDSLProgram(this.castDSLProgram(program));
         
-        // Return the recorded robot commands
+        // Return the recorded robot commands and timestamps
         return {
-            commands: this.commands
+            commands: this.commands,
+            timestamps: this.scene.timestamps
         };
     }
 }

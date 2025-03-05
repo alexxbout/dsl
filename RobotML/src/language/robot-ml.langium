@@ -14,7 +14,7 @@ BlockRule:
     {Block} '{' (statements+=StatementRule)* '}';
 
 StatementRule returns Statement:
-    VariableAssignRule | VariableDeclRule | ReturnRule | LoopRule | CommandRule | FunctionCallRule;
+    VariableAssignRule | VariableDeclRule | ReturnRule | LoopRule | CommandRule | FunctionCallRule | IfRule | BlockRule;
 
 ExpressionRule returns Expression:
     LogicalExprRule | CastRule;
@@ -41,7 +41,7 @@ BooleanLiteralRule:
     {BooleanLiteral} value=BooleanRule;
 
 FunctionCallRule:
-    {FunctionCall} func=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
+    {FunctionCall} functioncall=[FunctionRule:ID] '(' (args+=ExpressionRule (',' args+=ExpressionRule)*)? ')';
 
 VariableAssignRule:
     {VariableAssign} variable=[AbstractVariableDecl:ID] '=' value=ExpressionRule;
@@ -54,6 +54,9 @@ ReturnRule:
 
 LoopRule:
     {Loop} 'loop' condition=ExpressionRule block=BlockRule;
+
+IfRule:
+    {IfStatement} 'if' '(' condition=ExpressionRule ')' thenBlock=BlockRule ('else' elseBlock=BlockRule)?;
 
 CommandRule:
     SpeedRule | ClockRule | MovementRule | DistanceRule;
@@ -173,7 +176,7 @@ interface UnitValue extends Expression {
 }
 
 interface FunctionCall extends Expression, Statement {
-    func: @FunctionDef;
+    functioncall: @FunctionDef;
     args: Expression[];
 }
 
@@ -241,4 +244,10 @@ interface LogicalExpr extends Expression {
     left: Expression;
     operator: string;
     right: Expression;
+}
+
+interface IfStatement extends Statement {
+    condition: Expression;
+    thenBlock: Block;
+    elseBlock?: Block;
 }
