@@ -5,7 +5,6 @@ import { CustomWindow } from './lib/utils.js';
 import { Wall } from './lib/wall.js';
 import { Scene } from './simulator/scene.js';
 
-// TODO : call it in setupClassic.ts
 /**
  * Function to setup the simulator and the different notifications exchanged between the client and the server.
  * @param client the Monaco client, used to send and listen notifications.
@@ -36,17 +35,11 @@ export function setup(client: MonacoLanguageClient, uri: string) {
         }
     } 
 
-
-    const hello = (async (person: string) => {
-        console.log(`Hello ${person}!`)
-    });
-
     const typecheck = (async (input: any) => {
         console.info('typechecking current code...');
 
         // BONUS : Implement new semantics for typechecking
-        
-        // if(errors.length > 0){
+        // if(error.length > 0){
         //     const modal = document.getElementById("errorModal")! as HTMLElement;
             
         //     modal.style.display = "block";
@@ -98,14 +91,9 @@ export function setup(client: MonacoLanguageClient, uri: string) {
         );
     }
 
-
-
     // Listen to custom notifications coming from the server, here to call the "test" function
-    client.onNotification('custom/hello', hello);
+    // client.onNotification('custom/hello', hello);
 
-    // Listen to the button click to notify the server to hello the code
-    // win.hello is called in the index.html file, line 13
-    win.hello = () => client.sendNotification('custom/hello', 'Alexandre');
     // TODO : to adapt
     win.execute = execute;
     win.execute = typecheck;
