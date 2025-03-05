@@ -1,6 +1,15 @@
 {
   "devDependencies": {
     "@types/node": "^22.13.9",
+    "@types/p5": "^1.7.6",
     "langium-visitor": "^1.3.0"
+  },
+  "dependencies": {
+    "p5": "^1.11.3",
+    "@codingame/monaco-vscode-editor-service-override": "~3.2.3",
+    "@codingame/monaco-vscode-keybindings-service-override": "~3.2.3",
+    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~3.2.3",
+    "monaco-editor-wrapper": "~4.0.2",
+    "monaco-languageclient": "~8.1.1"
   }
 }

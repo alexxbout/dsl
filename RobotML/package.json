@@ -34,7 +34,6 @@
         "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~3.2.3",
         "monaco-editor-wrapper": "~4.0.2",
         "monaco-languageclient": "~8.1.1",
-        "p5": "^1.11.3",
         "vscode": "npm:@codingame/monaco-vscode-api@~3.2.3",
         "vscode-languageclient": "~9.0.1",
         "vscode-languageserver": "~9.0.1"
@@ -52,6 +51,7 @@
         "http-server": "~14.1.1",
         "langium-cli": "~3.4.0",
         "langium-visitor": "^1.4.0",
+        "p5": "^1.11.3",
         "typescript": "~5.1.6",
         "vite": "~5.2.7",
         "vitest": "~1.4.0"
