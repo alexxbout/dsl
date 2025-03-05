@@ -1,9 +1,9 @@
 import { inject, type Module } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { RobotMLInterpreter } from '../semantics/interpreter.js';
-import { RobotMlAcceptWeaver } from '../semantics/robot-ml-accept-weaver.js';
 import { RobotMlTypeChecker } from '../semantics/type-checker.js';
 import { RobotMlGeneratedModule, RobotMlGeneratedSharedModule } from './generated/module.js';
+import { RobotMlAcceptWeaver } from './robot-ml-accept-weaver.js';
 import { registerValidationChecks, RobotMlValidator } from './robot-ml-validator.js';
 
 /**
