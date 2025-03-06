@@ -10,7 +10,8 @@
         <main>
             <h1>RoboML in Langium</h1>
             <div id="buttons">
-                <input class="build" type="button" value="Execute Simulation" onclick="window.execute()">
+                <input class="build" type="button" value="Mazinator" onclick="window.mazinator()">
+                <input class="build" type="button" value="Execute Simulation" onclick="window.execute(window.scene)">
                 <input class="build" type="button" value="Restart Simulation" onclick="window.resetSimulation()">
                 <input class="build" type="button" value="Clear Data" onclick="window.setup()">
             </div>
@@ -59,10 +60,10 @@
     </body>
     <script type="module">
         // vite is used to resolve the included TypeScript files
-        import '../interpreter/src/web/lib/block'
-        import '../interpreter/src/web/lib/robot'
-        import '../interpreter/src/web/lib/wall'
-        import '../interpreter/src/web/lib/sketch'
+        import './src/web/lib/block'
+        import './src/web/lib/robot'
+        import './src/web/lib/wall'
+        import './src/web/lib/sketch'
         import { configureMonacoWorkers } from './src/setupCommon';
         import { executeClassic } from './src/setupClassic';
 

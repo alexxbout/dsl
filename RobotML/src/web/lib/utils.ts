@@ -14,4 +14,5 @@ export type CustomWindow = typeof window & {
     hello: (name: string) => void
     typecheck: (input: any) => void
     execute: (scene: Scene) => void
+    mazinator: () => void
 };
