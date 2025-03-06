@@ -29,12 +29,37 @@ export const setupConfigClassic = (): UserConfig => {
 };
 
 const CODE = `
-let void main(){
-    Forward 100 in cm
-    Clock 90
-    Forward 100 in cm
-    Left 500 in cm
-}`;
+let void main() {
+    setSpeed(1/100)
+
+    Forward 400 in cm
+    Right 500 in cm
+    var number i = 0
+
+    setSpeed(5/10)
+
+    loop i < 4 {
+        Forward 100 in cm
+
+        setSpeed(2/10)
+
+        // Tourner à gauche de 90°
+        Clock -90
+
+        // Incrémentation de la boucle
+        i = i + 1
+
+        var number b = 0
+        loop b <= 2 {
+            if (b == 1) {
+                Clock 180
+            }
+
+            b = b + 1
+        }
+    }
+}
+`;
 
 export const executeClassic = async (htmlElement: HTMLElement) => {
     const userConfig = setupConfigClassic();
