@@ -2,10 +2,10 @@ import * as ast from "../language/generated/ast.js";
 import { AbstractVariableDecl, BinaryOperation, Block, BooleanExpr, BooleanLiteral, Clock, Command, Comment, DSLProgram, Expression, Forward, FunctionCall, FunctionDef, Literal, LogicalExpr, Loop, Movement, NumberLiteral, ParenExpr, Return, RobotMlVisitor, Rotation, Speed, Statement, UnitValue, Variable, VariableAssign, VariableDecl, VariableFunDecl } from "../language/robot-ml-visitor.js";
 import * as Entities from "../web/simulator/entities.js";
 
-// Create environment and state objects for the interpreter
-interface Environment {
+// Create Scope and state objects for the interpreter
+interface Scope {
     variables: Map<string, any>;
-    parent?: Environment;
+    parent?: Scope;
 }
 
 // Result of the interpreter, tracking robot commands for display/simulation
@@ -17,14 +17,13 @@ export interface InterpreterResult {
 // Types of robot commands that can be executed
 export type RobotCommand = 
     | { type: 'turn'; angle: number; timestamp: number }
-    | { type: 'move'; distance: number; unit: string; timestamp: number }
-    | { type: 'side'; distance: number; direction: 'left' | 'right'; timestamp: number }
+    | { type: 'move'; distance: number; unit: string; direction: 'forward' | 'backward' | 'left' | 'right'; timestamp: number }
     | { type: 'setSpeed'; value: number; timestamp: number };
 
 export class RobotMLInterpreter implements RobotMlVisitor {
-    // Global environment for variables and functions
-    private globalEnv: Environment = { variables: new Map<string, any>() };
-    private currentEnv: Environment;
+    // Global Scope for variables and functions
+    private globalEnv: Scope = { variables: new Map<string, any>() };
+    private currentEnv: Scope;
     private functions: Map<string, FunctionDef> = new Map();
     private returnValue: any = undefined;
     
@@ -36,14 +35,14 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         this.currentEnv = this.globalEnv;
     }    
 
-    // Create a new environment with the given parent
-    private createEnvironment(parent: Environment): Environment {
+    // Create a new Scope with the given parent
+    private createScope(parent: Scope): Scope {
         return { variables: new Map<string, any>(), parent };
     }
 
-    // Look up a variable in the current environment chain
+    // Look up a variable in the current Scope chain
     private lookupVariable(name: string): any {
-        let env: Environment | undefined = this.currentEnv;
+        let env: Scope | undefined = this.currentEnv;
         while (env) {
             if (env.variables.has(name)) {
                 return env.variables.get(name);
@@ -53,7 +52,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         throw new Error(`Variable '${name}' not found`);
     }
 
-    // Store a variable in the current environment
+    // Store a variable in the current Scope
     private storeVariable(name: string, value: any): void {
         this.currentEnv.variables.set(name, value);
     }
@@ -109,7 +108,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         
         // Execute each statement in the block
         const previousEnv = this.currentEnv;
-        this.currentEnv = this.createEnvironment(previousEnv);
+        this.currentEnv = this.createScope(previousEnv);
 
         for (let i = 0; i < node.statements.length; i++) {
             const statement = node.statements[i];
@@ -121,7 +120,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
             }
         }
 
-        // Restore the previous environment
+        // Restore the previous Scope
         this.currentEnv = previousEnv;
         return undefined;
     }
@@ -215,9 +214,9 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         // Evaluate arguments
         const args = node.args.map(arg => this.visitExpression(this.castExpression(arg)));
 
-        // Create a new environment for the function call
+        // Create a new Scope for the function call
         const previousEnv = this.currentEnv;
-        this.currentEnv = this.createEnvironment(this.globalEnv);
+        this.currentEnv = this.createScope(this.globalEnv);
 
         // Bind parameters to argument values
         func.params.forEach((param, index) => {
@@ -230,7 +229,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         // Execute function body
         this.visitBlock(this.castBlock(func.block));
 
-        // Restore environment
+        // Restore Scope
         this.currentEnv = previousEnv;
 
         // Return the function's return value
@@ -438,6 +437,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
             type: 'move', 
             distance, 
             unit,
+            direction: 'forward',
             timestamp
         });
         
@@ -462,6 +462,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                     type: 'move', 
                     distance: value, 
                     unit, 
+                    direction: 'forward',
                     timestamp 
                 });
                 break;
@@ -470,22 +471,25 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                     type: 'move', 
                     distance: -value, 
                     unit, 
+                    direction: 'backward',
                     timestamp 
                 });
                 break;
             case 'Left':
                 this.commands.push({ 
-                    type: 'side', 
+                    type: 'move', 
                     distance: value, 
-                    direction: 'left', 
+                    unit, 
+                    direction: 'left',
                     timestamp 
                 });
                 break;
             case 'Right':
                 this.commands.push({ 
-                    type: 'side', 
+                    type: 'move', 
                     distance: value, 
-                    direction: 'right', 
+                    unit, 
+                    direction: 'right',
                     timestamp 
                 });
                 break;

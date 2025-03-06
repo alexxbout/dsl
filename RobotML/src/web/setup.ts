@@ -151,13 +151,45 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                     }
                     console.log(`Déplacement de ${distance}mm (${command.distance}${command.unit})`);
                     
-                    // Vérifier si le mouvement est possible (pas de collision)
-                    moveSuccessful = scene.robot.move(distance);
+                    // Appliquer la direction
+                    switch (command.direction) {
+                        case 'forward':
+                            console.log(`Déplacement avant de ${distance}mm (${command.distance}${command.unit})`);
+                            moveSuccessful = scene.robot.move(distance);
+                            if (moveSuccessful && win.p5robot) {
+                                win.p5robot.move(distance);
+                            }
+                            break;
+                        case 'backward':
+                            console.log(`Déplacement arrière de ${distance}mm (${command.distance}${command.unit})`);
+                            moveSuccessful = scene.robot.move(-distance);
+                            if (moveSuccessful && win.p5robot) {
+                                win.p5robot.move(-distance);
+                            }
+                            break;
+                        case 'left':
+                            console.log(`Déplacement latéral gauche de ${distance}mm (${command.distance}${command.unit})`);
+                            // Pour un déplacement à gauche, on utilise side() avec une valeur positive
+                            moveSuccessful = scene.robot.side(distance);
+                            if (moveSuccessful && win.p5robot) {
+                                win.p5robot.side(distance);
+                            }
+                            break;
+                        case 'right':
+                            console.log(`Déplacement latéral droit de ${distance}mm (${command.distance}${command.unit})`);
+                            // Pour un déplacement à droite, on utilise side() avec une valeur négative
+                            moveSuccessful = scene.robot.side(-distance);
+                            if (moveSuccessful && win.p5robot) {
+                                win.p5robot.side(-distance);
+                            }
+                            break;
+                        default:
+                            console.warn(`Direction inconnue: ${command.direction}`);
+                            moveSuccessful = false;
+                    }
                     
-                    // Appliquer la même commande au robot visuel seulement si le mouvement est possible
-                    if (moveSuccessful && win.p5robot) {
-                        win.p5robot.move(distance);
-                    } else if (!moveSuccessful) {
+                    // Afficher un message si le mouvement est impossible
+                    if (!moveSuccessful) {
                         console.log("Mouvement impossible à cause d'une collision - Le robot reste immobile");
                     }
                     break;
