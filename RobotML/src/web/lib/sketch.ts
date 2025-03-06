@@ -35,20 +35,6 @@ const sketch = (p: P5) => {
 
 const p5 = new P5(sketch);
 
-function updateRobot(p: P5) {
-    const lastKnownState = win.scene!.timestamps[win.lastTimestamp];
-    const nextKnownState = win.scene!.timestamps[win.lastTimestamp + 1];
-
-    win.p5robot.x = p.map(win.time, lastKnownState.time, nextKnownState.time, lastKnownState.pos.x, nextKnownState.pos.x, true)
-    win.p5robot.y = p.map(win.time, lastKnownState.time, nextKnownState.time, lastKnownState.pos.y, nextKnownState.pos.y, true)
-    win.p5robot.angle = p.map(win.time, lastKnownState.time, nextKnownState.time, lastKnownState.rad, nextKnownState.rad, true)
-
-    if (win.time >= nextKnownState.time) {
-        win.time = nextKnownState.time;
-        win.lastTimestamp++;
-    }
-}
-
 function resetSimulation() {
     win.time = 0;
     win.lastTimestamp = 0;

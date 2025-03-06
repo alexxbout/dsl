@@ -38,12 +38,19 @@ export class Robot {
         const canvasY = this.y * this.factor;
         this.p5.translate(canvasX, canvasY);
         this.p5.rotate(this.angle);
-        this.p5.stroke(255, 255, 255);
-        this.p5.rect(-this.height/2, -this.width/2, this.height, this.width);
-        this.p5.stroke(255, 0, 0);
-        this.p5.fill(255, 0, 0);
-        const h = (Math.sqrt(3)/2) * (this.width/3)
-        this.p5.triangle(-0.5*h, -(this.height/6), -0.5*h, this.height/6, 0.5*h, 0);
+        
+        // Draw Pacman body
+        this.p5.fill(255, 255, 0); // Yellow color
+        this.p5.noStroke();
+        
+        // Calculate mouth angle based on animation
+        const mouthAngle = this.p5.map(Math.sin(this.p5.frameCount * 0.1), -1, 1, 0.05, 0.2);
+        
+        // Draw arc for pacman shape
+        this.p5.arc(0, 0, this.width, this.height, 
+                    mouthAngle * Math.PI, 
+                    (2 - mouthAngle) * Math.PI);
+                    
         this.p5.pop();
     }
   
