@@ -53,6 +53,16 @@ export function setup(client: MonacoLanguageClient, uri: string) {
         }
     });
 
+    // Utility function to convert degrees to radians
+    const degreesToRadians = (degrees: number): number => {
+        return degrees * Math.PI / 180;
+    };
+    
+    // Utility function to convert radians to degrees
+    const radiansToDegrees = (radians: number): number => {
+        return radians * 180 / Math.PI;
+    };
+
     // Fonction pour exécuter les commandes
     const executeCommands = (commands: any[], scene: Scene) => {
         console.log('Exécution de', commands.length, 'commandes');
@@ -66,7 +76,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             win.p5robot.updatePosition(
                 scene.robot.pos.x,
                 scene.robot.pos.y,
-                scene.robot.rad * 180 / Math.PI // Convertir les radians en degrés
+                radiansToDegrees(scene.robot.rad) // Convertir les radians en degrés
             );
             
             // Définir la vitesse d'animation du robot
@@ -94,9 +104,8 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             switch (command.type) {
                 case 'turn':
                     console.log(`Rotation de ${command.angle} degrés`);
-                    // Convertir les degrés en radians pour le robot du simulateur
-                    const angleInRadians = command.angle * Math.PI / 180;
-                    scene.robot.turn(angleInRadians);
+                    // Appliquer la rotation au robot du simulateur (qui attend des degrés)
+                    scene.robot.turn(command.angle);
                     
                     // Appliquer la même commande au robot visuel (en degrés)
                     if (win.p5robot) {
@@ -263,7 +272,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                 scene.robot.pos.y,
                 scene.robot.size.x * factor,
                 scene.robot.size.y * factor,
-                scene.robot.rad * 180 / Math.PI, // Convertir les radians en degrés
+                radiansToDegrees(scene.robot.rad), // Convertir les radians en degrés
                 p5
             );
         } else {
@@ -272,14 +281,14 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             win.p5robot.updatePosition(
                 scene.robot.pos.x,
                 scene.robot.pos.y,
-                scene.robot.rad * 180 / Math.PI // Convertir les radians en degrés
+                radiansToDegrees(scene.robot.rad) // Convertir les radians en degrés
             );
             
             // Mettre à jour le facteur d'échelle
             win.p5robot.factor = factor;
         }
         
-        console.log("Robot positionné à:", scene.robot.pos.x, scene.robot.pos.y, "avec angle:", scene.robot.rad * 180 / Math.PI, "degrés");
+        console.log("Robot positionné à:", scene.robot.pos.x, scene.robot.pos.y, "avec angle:", radiansToDegrees(scene.robot.rad), "degrés");
         
         // Forcer le rafraîchissement de l'affichage
         if (win.p5instance && typeof win.p5instance.redraw === 'function') {

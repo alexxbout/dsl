@@ -30,6 +30,11 @@ export class Robot {
         this.targetAngle = _angle;
     }
 
+    // Utility function to convert degrees to radians
+    degreesToRadians(degrees: number): number {
+        return degrees * Math.PI / 180;
+    }
+
     show() {
         this.updateAnimation();
         
@@ -55,29 +60,23 @@ export class Robot {
     }
   
     turn(angle: number) {
-        // Convert angle from degrees to radians
-        const angleRad = angle * Math.PI / 180;
+        // Convert angle from degrees to radians for internal calculations
+        const angleRad = this.degreesToRadians(angle);
         
-        // Calculate target angle in radians based on current angle
+        // Calculer le nouvel angle cible en tenant compte de l'angle actuel
+        // Utiliser l'angle actuel comme base pour éviter les rotations multiples
         this.targetAngle = this.angle + angleRad;
         
-        // Normalize target angle between 0 and 2π radians
-        while (this.targetAngle < 0) {
-            this.targetAngle += 2 * Math.PI;
-        }
-        while (this.targetAngle >= 2 * Math.PI) {
-            this.targetAngle -= 2 * Math.PI;
-        }
-        
-        console.log(`Robot: Rotation of ${angle}° (${angleRad.toFixed(4)} rad) - Current angle: ${this.angle} rad - Target angle: ${this.targetAngle} rad`);
-        
+        // Activer l'animation
         this.isAnimating = true;
+        
+        console.log(`Robot: Tourne de ${angle} degrés, cible: ${this.targetAngle * 180 / Math.PI}°`);
     }
 
     move(dist: number) {
         // Calculer la position cible
-        let anglecos = Math.cos(this.angle * Math.PI / 180);
-        let anglesin = Math.sin(this.angle * Math.PI / 180);
+        let anglecos = Math.cos(this.angle);
+        let anglesin = Math.sin(this.angle);
         const newTargetX = this.x + anglecos * dist;
         const newTargetY = this.y + anglesin * dist;
         
@@ -93,8 +92,8 @@ export class Robot {
 
     side(dist: number) {
         // Calculer la position cible pour un déplacement latéral
-        let anglecos = Math.cos(this.angle * Math.PI / 180);
-        let anglesin = Math.sin(this.angle * Math.PI / 180);
+        let anglecos = Math.cos(this.angle);
+        let anglesin = Math.sin(this.angle);
         const newTargetX = this.x + -anglesin * dist;
         const newTargetY = this.y + anglecos * dist;
         

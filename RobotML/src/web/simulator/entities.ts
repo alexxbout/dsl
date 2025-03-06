@@ -1,5 +1,5 @@
-import { Vector, Ray } from './utils.js';
-import { Scene } from "./scene.js"
+import { Scene } from "./scene.js";
+import { Ray, Vector } from './utils.js';
 
 export interface Entities {
     type:string;
@@ -20,9 +20,14 @@ export class Robot implements Entities{
     constructor(pos:Vector, size:Vector, angle:number, speed:number, scene:Scene) {
         this.pos = pos;
         this.size = size;
-        this.rad = angle * Math.PI / 180;
+        this.rad = this.degreesToRadians(angle);
         this.speed = speed;
         this.scene = scene;
+    }
+    
+    // Utility function to convert degrees to radians
+    degreesToRadians(degrees: number): number {
+        return degrees * Math.PI / 180;
     }
   
     intersect(ray :Ray) : Vector[] {
@@ -30,8 +35,11 @@ export class Robot implements Entities{
     }
 
     turn(angle:number) : boolean {
-        // Convertir l'angle en radians et mettre à jour l'orientation du robot
-        this.rad += angle;
+        // Convert angle from degrees to radians
+        const angleRad = this.degreesToRadians(angle);
+        
+        // Update the robot's orientation
+        this.rad += angleRad;
         
         // Normaliser l'angle entre 0 et 2π
         this.rad = this.rad % (2 * Math.PI);
@@ -42,7 +50,7 @@ export class Robot implements Entities{
         // Enregistrer un timestamp pour cette action
         this.scene.timestamps.push(new Timestamp(this.scene.time++, this));
         
-        console.log(`Robot: Tourne de ${angle * 180 / Math.PI} degrés, nouvelle orientation: ${this.rad * 180 / Math.PI}°`);
+        console.log(`Robot: Tourne de ${angle} degrés, nouvelle orientation: ${this.rad * 180 / Math.PI}°`);
         return true; // La rotation est toujours possible
     }
 
