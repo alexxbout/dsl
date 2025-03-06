@@ -562,7 +562,15 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitLoop(node: Loop): any {
+        const MAX_ITERATIONS = 1000; // Prevent infinite loops
+        let iterations = 0;
+        
         while (this.visitExpression(this.castExpression(node.condition))) {
+            iterations++;
+            if (iterations > MAX_ITERATIONS) {
+                throw new Error('Maximum loop iterations exceeded - possible infinite loop detected');
+            }
+            
             this.visitBlock(this.castBlock(node.block));
             
             // If we've got a return value, exit the loop
