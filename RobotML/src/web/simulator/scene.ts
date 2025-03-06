@@ -17,6 +17,8 @@ export class BaseScene{
     timestamps:Array<Entities.Timestamp> = [];
 
     constructor(size:Vector = new Vector(10000,10000)){
+        console.info("scene : constructor");
+        
         this.size = size;
         this.robot = new Entities.Robot(new Vector(250,250), new Vector(250,250), 0, 30, this)
         this.entities.push(new Entities.Wall(Vector.null(), this.size.projX()));
@@ -29,6 +31,8 @@ export class BaseScene{
     public clearEntities() {}
 
     public mazinator(cellSize: number = 1000, wallThickness: number = 10) {
+        console.info("scene : mazinator");
+
         const mazeWidth = Math.floor(this.size.x / cellSize);
         const mazeHeight = Math.floor(this.size.y / cellSize);
         const maze = Array.from({ length: mazeHeight }, () => Array(mazeWidth).fill(false));

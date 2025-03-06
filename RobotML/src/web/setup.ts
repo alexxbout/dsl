@@ -36,7 +36,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
     } 
 
     const typecheck = (async (input: any) => {
-        console.info('typechecking current code...');
+        console.info('setup : typecheck');
 
         // BONUS : Implement new semantics for typechecking
         // Get diagnostics from the language client
@@ -58,23 +58,23 @@ export function setup(client: MonacoLanguageClient, uri: string) {
     });
 
     const execute = (async (scene: Scene) => {
-        console.info("execute");
+        console.info("setup : execute");
 
         // maybe typecheck here
     });
 
     const mazinator = () => {
-        console.info("mazinator");
+        console.info("setup : mazinator");
 
         const scene = win.scene as BaseScene;
 
-        setupSimulator(scene);
-        
         scene.mazinator();
+
+        setupSimulator(scene);
     }
 
     const setupSimulator = (scene: Scene) => {
-        console.info("setupSimulator");
+        console.info("setup : setupSimulator");
 
         const wideSide = Math.max(scene.size.x, scene.size.y);
         let factor = 1000 / wideSide;
