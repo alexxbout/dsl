@@ -1,5 +1,6 @@
 import * as ast from "../language/generated/ast.js";
 import { AbstractVariableDecl, BinaryOperation, Block, BooleanExpr, BooleanLiteral, Clock, Command, Comment, DSLProgram, Expression, Forward, FunctionCall, FunctionDef, Literal, LogicalExpr, Loop, Movement, NumberLiteral, ParenExpr, Return, RobotMlVisitor, Rotation, Speed, Statement, UnitValue, Variable, VariableAssign, VariableDecl, VariableFunDecl } from "../language/robot-ml-visitor.js";
+import * as Entities from "../web/simulator/entities.js";
 
 // Create environment and state objects for the interpreter
 interface Environment {
@@ -7,45 +8,10 @@ interface Environment {
     parent?: Environment;
 }
 
-// Mock simulator types for type safety
-interface SimulatorScene {
-    robot: SimulatorRobot;
-    entities: SimulatorEntity[];
-    timestamps: SimulatorTimestamp[];
-    time: number;
-    size: { x: number, y: number };
-}
-
-interface SimulatorRobot {
-    pos: { x: number, y: number };
-    rad: number;
-    speed: number;
-    turn(angle: number): void;
-    move(distance: number): void;
-    side(distance: number): void;
-    getRay(): SimulatorRay;
-}
-
-interface SimulatorRay {
-    intersect(entities: SimulatorEntity[]): { x: number, y: number } | undefined;
-}
-
-interface SimulatorEntity {
-    type: string;
-    pos: { x: number, y: number };
-}
-
-interface SimulatorTimestamp {
-    time: number;
-    pos: { x: number, y: number };
-    rad: number;
-    speed: number;
-}
-
 // Result of the interpreter, tracking robot commands for display/simulation
 export interface InterpreterResult {
     commands: RobotCommand[];
-    timestamps: SimulatorTimestamp[];
+    timestamps: Array<Entities.Timestamp>;
 }
 
 // Types of robot commands that can be executed
@@ -64,50 +30,11 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     
     // Track robot commands and simulator state
     private commands: RobotCommand[] = [];
-    private scene: SimulatorScene;
     private currentTime: number = 0;
     
     constructor() {
         this.currentEnv = this.globalEnv;
-        // Create a mock scene for now - in a real implementation, this would be initialized with the actual simulator
-        this.scene = this.createMockScene();
-    }
-
-    // Create a mock scene for testing
-    private createMockScene(): SimulatorScene {
-        const robot: SimulatorRobot = {
-            pos: { x: 500, y: 500 },
-            rad: 0,
-            speed: 30,
-            turn(angle: number) {
-                this.rad += angle * Math.PI / 180;
-            },
-            move(distance: number) {
-                this.pos.x += Math.cos(this.rad) * distance;
-                this.pos.y += Math.sin(this.rad) * distance;
-            },
-            side(distance: number) {
-                this.pos.x += Math.cos(this.rad + Math.PI/2) * distance;
-                this.pos.y += Math.sin(this.rad + Math.PI/2) * distance;
-            },
-            getRay() {
-                return {
-                    intersect(entities: SimulatorEntity[]) {
-                        // Mock implementation that always returns undefined (no obstacles)
-                        return undefined;
-                    }
-                };
-            }
-        };
-
-        return {
-            robot,
-            entities: [],
-            timestamps: [],
-            time: 0,
-            size: { x: 1000, y: 1000 }
-        };
-    }
+    }    
 
     // Create a new environment with the given parent
     private createEnvironment(parent: Environment): Environment {
@@ -152,15 +79,9 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         return node as unknown as Block;
     }
 
-    // Record a timestamp in the simulator
+    // Record a timestamp
     private recordTimestamp(): number {
         this.currentTime += 1;
-        this.scene.timestamps.push({
-            time: this.currentTime,
-            pos: { ...this.scene.robot.pos },
-            rad: this.scene.robot.rad,
-            speed: this.scene.robot.speed
-        });
         return this.currentTime;
     }
 
@@ -184,11 +105,15 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitBlock(node: Block): any {
+        console.log("visitBlock - Nombre d'instructions:", node.statements.length);
+        
         // Execute each statement in the block
         const previousEnv = this.currentEnv;
         this.currentEnv = this.createEnvironment(previousEnv);
 
-        for (const statement of node.statements) {
+        for (let i = 0; i < node.statements.length; i++) {
+            const statement = node.statements[i];
+            console.log(`Exécution de l'instruction ${i+1}/${node.statements.length}, type: ${statement.$type}`);
             this.visitStatement(this.castStatement(statement));
             // If we've got a return value, exit the block early
             if (this.returnValue !== undefined) {
@@ -202,15 +127,21 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitDSLProgram(node: DSLProgram): any {
+        console.log("visitDSLProgram - Fonctions trouvées:", node.functions.length);
+        
         // Register all functions
         for (const func of node.functions) {
+            console.log("Enregistrement de la fonction:", func.name);
             this.functions.set(func.name, this.castFunctionDef(func));
         }
 
         // Find the main function (if any) and execute it
         const mainFunc = this.functions.get('main');
         if (mainFunc) {
+            console.log("Fonction main trouvée, exécution...");
             return this.visitFunctionDef(mainFunc);
+        } else {
+            console.log("Fonction main non trouvée!");
         }
         
         return undefined;
@@ -373,6 +304,13 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitFunctionDef(node: FunctionDef): any {
+        console.log("visitFunctionDef:", node.name, "avec", node.block.statements.length, "instructions");
+        
+        // Si c'est la fonction main, exécuter son bloc
+        if (node.name === 'main') {
+            return this.visitBlock(this.castBlock(node.block));
+        }
+        
         // Store the function definition
         this.functions.set(node.name, node);
         return undefined;
@@ -381,6 +319,8 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     visitStatement(node: Statement): any {
         // Dispatch to the appropriate visitor method based on node type
         const nodeType = node.$type as string;
+        console.log("visitStatement - Type:", nodeType);
+        
         switch (nodeType) {
             case 'VariableDecl':
                 return this.visitVariableDecl(node as VariableDecl);
@@ -413,6 +353,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 // Handle Timestamp command
                 return this.visitTimestamp(node as any);
             default:
+                console.error(`Type d'instruction inconnu: ${nodeType}`);
                 throw new Error(`Unknown statement type: ${nodeType}`);
         }
     }
@@ -472,59 +413,51 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         const sign = node.sign || '+';
         const finalAngle = sign === '-' ? -angle : angle;
         
-        // Update the simulator
-        this.scene.robot.turn(finalAngle);
+        // Générer un timestamp pour la commande
         const timestamp = this.recordTimestamp();
         
-        // Record the robot command
+        // Enregistrer la commande robot
         this.commands.push({ type: 'turn', angle: finalAngle, timestamp });
         
-        console.log(`[Robot] Clock ${sign}${angle} (turns by ${finalAngle} degrees)`);
+        console.log(`[Robot] Clock ${sign}${angle} (tourne de ${finalAngle} degrés)`);
         return undefined;
     }
 
     visitForward(node: Forward): any {
-        // Convert to mm for the simulator
-        let distance = node.distance;
-        if (node.unit === 'cm') {
-            distance *= 10; // Convert cm to mm
-        }
+        console.log("visitForward - distance:", node.distance, "unit:", node.unit);
         
-        // Update the simulator
-        this.scene.robot.move(distance);
+        // Extraire la distance et l'unité
+        const distance = node.distance;
+        const unit = node.unit;
+        
+        // Générer un timestamp pour la commande
         const timestamp = this.recordTimestamp();
         
-        // Record the robot command
+        // Enregistrer la commande robot
         this.commands.push({ 
             type: 'move', 
-            distance: node.distance, 
-            unit: node.unit,
+            distance, 
+            unit,
             timestamp
         });
         
-        console.log(`[Robot] Forward ${node.distance}${node.unit}`);
+        console.log(`[Robot] Forward ${distance}${unit} - Commande ajoutée, total: ${this.commands.length}`);
         return undefined;
     }
 
     visitMovement(node: Movement): any {
         const valueObj = this.visitExpression(this.castExpression(node.value));
         
-        // Extract value and unit from the cast result
+        // Extraire la valeur et l'unité du résultat
         let value = typeof valueObj === 'object' ? valueObj.value : valueObj;
         let unit = typeof valueObj === 'object' ? valueObj.unit : 'mm';
         
-        // Convert to mm for the simulator if needed
-        let distanceInMm = value;
-        if (unit === 'cm') {
-            distanceInMm = value * 10;
-        }
-        
+        // Générer un timestamp pour la commande
         const timestamp = this.recordTimestamp();
         
-        // Handle different directions
+        // Enregistrer la commande robot selon la direction
         switch (node.direction) {
             case 'Forward':
-                this.scene.robot.move(distanceInMm);
                 this.commands.push({ 
                     type: 'move', 
                     distance: value, 
@@ -533,7 +466,6 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 });
                 break;
             case 'Backward':
-                this.scene.robot.move(-distanceInMm);
                 this.commands.push({ 
                     type: 'move', 
                     distance: -value, 
@@ -542,7 +474,6 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 });
                 break;
             case 'Left':
-                this.scene.robot.side(distanceInMm);
                 this.commands.push({ 
                     type: 'side', 
                     distance: value, 
@@ -551,7 +482,6 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 });
                 break;
             case 'Right':
-                this.scene.robot.side(-distanceInMm);
                 this.commands.push({ 
                     type: 'side', 
                     distance: value, 
@@ -560,7 +490,7 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 });
                 break;
             default:
-                throw new Error(`Unknown direction: ${node.direction}`);
+                throw new Error(`Direction inconnue: ${node.direction}`);
         }
         
         console.log(`[Robot] ${node.direction} ${value}${unit}`);
@@ -570,50 +500,53 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     visitRotation(node: Rotation): any {
         const angle = this.visitExpression(this.castExpression(node.angle));
         
-        // Update the simulator
-        this.scene.robot.turn(angle);
+        // Générer un timestamp pour la commande
         const timestamp = this.recordTimestamp();
         
-        // Record the robot command
-        this.commands.push({ type: 'turn', angle, timestamp });
+        // Enregistrer la commande robot
+        const command: RobotCommand = { 
+            type: 'turn' as const, 
+            angle,
+            timestamp
+        };
+        console.log('💾 Enregistrement de la commande:', command);
+        this.commands.push(command);
         
-        console.log(`[Robot] Rotate ${angle} degrees`);
         return undefined;
     }
 
     visitSpeed(node: Speed): any {
         const value = this.visitExpression(this.castExpression(node.value));
         
-        // Update the simulator
-        this.scene.robot.speed = value;
+        // Générer un timestamp pour la commande
         const timestamp = this.recordTimestamp();
         
-        // Record the robot command
+        // Enregistrer la commande robot
         this.commands.push({ type: 'setSpeed', value, timestamp });
         
-        console.log(`[Robot] Set speed to ${value}`);
+        console.log(`[Robot] Définit la vitesse à ${value}`);
         return undefined;
     }
 
     visitDistance(node: any): any {
-        // Get the distance from the robot's ray
-        const ray = this.scene.robot.getRay();
-        const intersection = ray.intersect(this.scene.entities);
+        // Extraire la valeur de distance
+        const value = this.visitExpression(this.castExpression(node.value));
         
-        if (intersection) {
-            // Calculate distance using Pythagorean theorem
-            const dx = this.scene.robot.pos.x - intersection.x;
-            const dy = this.scene.robot.pos.y - intersection.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            console.log(`[Robot] Distance: ${distance}mm`);
-            return distance;
-        }
+        // Générer un timestamp pour la commande
+        const timestamp = this.recordTimestamp();
         
-        console.log(`[Robot] No obstacle detected`);
-        return Infinity;
+        // Enregistrer une commande de type "distance" (pour la compatibilité)
+        console.log(`[Robot] Distance command with value ${value}`);
+        
+        // Retourner la valeur de distance
+        return value;
     }
 
     visitTimestamp(node: any): any {
+        // Enregistrer le temps actuel
+        console.log(`[Robot] Current timestamp: ${this.currentTime}`);
+        
+        // Retourner le temps actuel
         return this.currentTime;
     }
 
@@ -651,21 +584,56 @@ export class RobotMLInterpreter implements RobotMlVisitor {
 
     // Method to interpret a program
     interpret(program: ast.DSLProgram): InterpreterResult {
+        console.log("Début de l'interprétation du programme");
+        this.debugAST(program);
+        
         // Reset state
         this.globalEnv = { variables: new Map<string, any>() };
         this.currentEnv = this.globalEnv;
         this.functions = new Map();
         this.returnValue = undefined;
         this.commands = [];
-        this.scene = this.createMockScene();
         this.currentTime = 0;
 
+        // Visiter l'AST pour générer les commandes
         this.visitDSLProgram(this.castDSLProgram(program));
         
-        // Return the recorded robot commands and timestamps
+        console.log("Fin de l'interprétation, commandes générées:", this.commands.length);
+        
+        // Retourner les commandes générées
         return {
             commands: this.commands,
-            timestamps: this.scene.timestamps
+            timestamps: [] // Pas de timestamps générés par l'interpréteur
         };
+    }
+    
+    // Méthode pour déboguer l'AST
+    private debugAST(program: ast.DSLProgram): void {
+        console.log("Débogage de l'AST:");
+        console.log("- Type du programme:", program.$type);
+        console.log("- Nombre de fonctions:", program.functions?.length || 0);
+        
+        if (program.functions && program.functions.length > 0) {
+            program.functions.forEach((func, index) => {
+                console.log(`- Fonction ${index + 1}:`, func.name);
+                console.log(`  - Type:`, func.$type);
+                console.log(`  - Nombre de paramètres:`, func.params?.length || 0);
+                
+                if (func.block && func.block.statements) {
+                    console.log(`  - Nombre d'instructions:`, func.block.statements.length);
+                    
+                    func.block.statements.forEach((stmt, stmtIndex) => {
+                        console.log(`    - Instruction ${stmtIndex + 1}:`, stmt.$type);
+                        
+                        // Afficher plus de détails pour les instructions Forward
+                        if (stmt.$type === 'Forward') {
+                            const forward = stmt as any;
+                            console.log(`      - Distance:`, forward.distance);
+                            console.log(`      - Unité:`, forward.unit);
+                        }
+                    });
+                }
+            });
+        }
     }
 }

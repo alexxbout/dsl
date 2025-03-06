@@ -12,8 +12,10 @@ const sketch = (p: P5) => {
         win.entities = [];
         win.time = 0;
         win.lastTimestamp = 0;
+        win.deltaTime = 0.016; // ~60fps
         win.scene = undefined;
-        win.p5robot = new Robot(1, p.width / 2, p.height / 2, undefined, undefined, undefined, p);
+        win.p5instance = p;
+        win.p5robot = new Robot(1, p.width / 2, p.height / 2, 30, 30, 0, p);
     };
 
     p.draw = () => {
@@ -25,11 +27,6 @@ const sketch = (p: P5) => {
             (win.entities[e] as unknown as Wall).show();
         }
 
-        if (win.scene !== null && win.scene && win.scene.timestamps.length > win.lastTimestamp + 1) {
-            win.time += win.deltaTime
-            updateRobot(p);
-        }
-
         if (win.p5robot !== null) {
             win.p5robot.show();
         }
@@ -37,8 +34,6 @@ const sketch = (p: P5) => {
 };
 
 const p5 = new P5(sketch);
-
-
 
 function updateRobot(p: P5) {
     const lastKnownState = win.scene!.timestamps[win.lastTimestamp];
@@ -57,6 +52,10 @@ function updateRobot(p: P5) {
 function resetSimulation() {
     win.time = 0;
     win.lastTimestamp = 0;
+    
+    if (win.p5robot) {
+        win.p5robot.updatePosition(win.p5robot.x, win.p5robot.y, win.p5robot.angle);
+    }
 }
 
 win.setup = p5.setup

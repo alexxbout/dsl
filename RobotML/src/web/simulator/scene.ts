@@ -28,7 +28,31 @@ export class BaseScene{
         this.timestamps.push(new Entities.Timestamp(0, this.robot));
     }
 
-    public clearEntities() {}
+    public clearEntities() {
+        // Conserver uniquement les murs de base (les 4 premiers éléments)
+        this.entities = this.entities.slice(0, 4);
+        
+        // Réinitialiser les timestamps
+        this.timestamps = [];
+        this.timestamps.push(new Entities.Timestamp(0, this.robot));
+        
+        // Réinitialiser le temps
+        this.time = 0;
+    }
+    
+    public resetRobot() {
+        // Réinitialiser la position et l'orientation du robot
+        this.robot.pos = new Vector(250, 250);
+        this.robot.rad = 0;
+        this.robot.speed = 30;
+        
+        // Réinitialiser les timestamps
+        this.timestamps = [];
+        this.timestamps.push(new Entities.Timestamp(0, this.robot));
+        
+        // Réinitialiser le temps
+        this.time = 0;
+    }
 
     public mazinator(cellSize: number = 1000, wallThickness: number = 10) {
         console.info("scene : mazinator");
