@@ -42,66 +42,22 @@ connection.onNotification("custom/interpret", (uri: string) => {
             const interpreter = new RobotMLInterpreter();
             console.log("Interpréteur créé, interprétation du modèle...");
             const result = interpreter.interpret(model);
-            console.log("Interprétation terminée, résultat:", result);
-            
-            // Si aucune commande n'a été générée, créer une commande de test
-            if (!result.commands || result.commands.length === 0) {
-                console.log("Aucune commande générée, création d'une commande de test");
-                result.commands = [
-                    { 
-                        type: 'move', 
-                        distance: 10, 
-                        unit: 'cm', 
-                        timestamp: 1 
-                    }
-                ];
-            }
-            
-            connection.sendNotification("custom/interpretResult", { 
+            console.log("Interprétation terminée, résultat:", result);            
+            connection.sendNotification("custom/interpretResult", {
                 success: true, 
                 result 
             });
         } catch (error) {
             console.error("Erreur lors de l'interprétation:", error);
-            
-            // En cas d'erreur, envoyer une commande de test
-            const testResult = {
-                commands: [
-                    { 
-                        type: 'move', 
-                        distance: 10, 
-                        unit: 'cm', 
-                        timestamp: 1 
-                    }
-                ],
-                timestamps: []
-            };
-            
             connection.sendNotification("custom/interpretResult", { 
-                success: true, 
-                result: testResult,
+                success: false, 
                 error: error instanceof Error ? error.message : String(error)
             });
         }
     } else {
         console.error("Modèle invalide ou contient des erreurs");
-        
-        // Même si le modèle est invalide, envoyer une commande de test
-        const testResult = {
-            commands: [
-                { 
-                    type: 'move', 
-                    distance: 10, 
-                    unit: 'cm', 
-                    timestamp: 1 
-                }
-            ],
-            timestamps: []
-        };
-        
         connection.sendNotification("custom/interpretResult", { 
-            success: true, 
-            result: testResult,
+            success: false, 
             error: "Failed to parse the model or model contains errors"
         });
     }
