@@ -106,22 +106,35 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     visitBlock(node: Block): any {
         console.log("visitBlock - Nombre d'instructions:", node.statements.length);
         
-        // Execute each statement in the block
+        // Créer un nouveau scope pour le bloc
+        const blockScope = this.createScope(this.currentEnv);
         const previousEnv = this.currentEnv;
-        this.currentEnv = this.createScope(previousEnv);
-
-        for (let i = 0; i < node.statements.length; i++) {
-            const statement = node.statements[i];
-            console.log(`Exécution de l'instruction ${i+1}/${node.statements.length}, type: ${statement.$type}`);
-            this.visitStatement(this.castStatement(statement));
-            // If we've got a return value, exit the block early
-            if (this.returnValue !== undefined) {
-                break;
+        this.currentEnv = blockScope;
+        
+        try {
+            // Exécuter chaque instruction dans le bloc
+            for (let i = 0; i < node.statements.length; i++) {
+                const statement = node.statements[i];
+                console.log(`Exécution de l'instruction ${i+1}/${node.statements.length}, type: ${statement.$type}`);
+                
+                const result = this.visitStatement(this.castStatement(statement));
+                
+                // Si nous avons une valeur de retour, sortir du bloc
+                if (this.returnValue !== undefined) {
+                    break;
+                }
+                
+                // Afficher l'état des variables après chaque instruction
+                if (statement.$type === 'VariableAssign' || statement.$type === 'VariableDecl') {
+                    console.log('État des variables après', statement.$type + ':', 
+                        Array.from(this.currentEnv.variables.entries()));
+                }
             }
+        } finally {
+            // Restaurer le scope précédent
+            this.currentEnv = previousEnv;
         }
-
-        // Restore the previous Scope
-        this.currentEnv = previousEnv;
+        
         return undefined;
     }
 
@@ -565,19 +578,37 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         const MAX_ITERATIONS = 1000; // Prevent infinite loops
         let iterations = 0;
         
-        while (this.visitExpression(this.castExpression(node.condition))) {
-            iterations++;
-            if (iterations > MAX_ITERATIONS) {
-                throw new Error('Maximum loop iterations exceeded - possible infinite loop detected');
+        // Créer un nouveau scope pour la boucle
+        const loopScope = this.createScope(this.currentEnv);
+        const previousEnv = this.currentEnv;
+        this.currentEnv = loopScope;
+        
+        try {
+            while (this.visitExpression(this.castExpression(node.condition))) {
+                iterations++;
+                if (iterations > MAX_ITERATIONS) {
+                    throw new Error('Maximum loop iterations exceeded - possible infinite loop detected');
+                }
+                
+                // Exécuter le bloc d'instructions
+                this.visitBlock(this.castBlock(node.block));
+                
+                // Si nous avons une valeur de retour, sortir de la boucle
+                if (this.returnValue !== undefined) {
+                    break;
+                }
+                
+                // Forcer une pause entre chaque itération pour permettre l'animation
+                if (iterations % 10 === 0) {
+                    console.log(`Itération ${iterations}, valeurs actuelles:`, 
+                        Array.from(this.currentEnv.variables.entries()));
+                }
             }
-            
-            this.visitBlock(this.castBlock(node.block));
-            
-            // If we've got a return value, exit the loop
-            if (this.returnValue !== undefined) {
-                break;
-            }
+        } finally {
+            // Restaurer le scope précédent
+            this.currentEnv = previousEnv;
         }
+        
         return undefined;
     }
 
@@ -592,7 +623,27 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         }
         
         const value = this.visitExpression(this.castExpression(node.value));
-        this.storeVariable(node.variable.ref.name, value);
+        const varName = node.variable.ref.name;
+        
+        // Chercher la variable dans la chaîne de scopes
+        let env: Scope | undefined = this.currentEnv;
+        let found = false;
+        
+        while (env) {
+            if (env.variables.has(varName)) {
+                env.variables.set(varName, value);
+                found = true;
+                break;
+            }
+            env = env.parent;
+        }
+        
+        if (!found) {
+            // Si la variable n'existe pas, la créer dans le scope courant
+            this.currentEnv.variables.set(varName, value);
+        }
+        
+        console.log(`Variable '${varName}' mise à jour avec la valeur: ${value}`);
         return value;
     }
 
