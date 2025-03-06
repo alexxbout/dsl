@@ -22,8 +22,7 @@ export function registerValidationChecks(services: RobotMlServices) {
         ],
         FunctionCall: [
             validator.checkFunctionCallArgCount
-        ],
-        VariableDecl: validator.checkVariableType
+        ]
     };
 
     registry.register(checks, validator);
