@@ -94,9 +94,11 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             switch (command.type) {
                 case 'turn':
                     console.log(`Rotation de ${command.angle} degrés`);
-                    scene.robot.turn(command.angle * Math.PI / 180); // Convertir les degrés en radians
+                    // Convertir les degrés en radians pour le robot du simulateur
+                    const angleInRadians = command.angle * Math.PI / 180;
+                    scene.robot.turn(angleInRadians);
                     
-                    // Appliquer la même commande au robot visuel
+                    // Appliquer la même commande au robot visuel (en degrés)
                     if (win.p5robot) {
                         win.p5robot.turn(command.angle);
                     }
@@ -113,6 +115,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                     switch (command.direction) {
                         case 'forward':
                             console.log(`Déplacement avant de ${distance}mm (${command.distance}${command.unit})`);
+                            // Pour un déplacement avant, on utilise move() avec la distance positive
                             moveSuccessful = scene.robot.move(distance);
                             if (moveSuccessful && win.p5robot) {
                                 win.p5robot.move(distance);
@@ -120,6 +123,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                             break;
                         case 'backward':
                             console.log(`Déplacement arrière de ${distance}mm (${command.distance}${command.unit})`);
+                            // Pour un déplacement arrière, on utilise move() avec la distance négative
                             moveSuccessful = scene.robot.move(-distance);
                             if (moveSuccessful && win.p5robot) {
                                 win.p5robot.move(-distance);
@@ -259,7 +263,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                 scene.robot.pos.y,
                 scene.robot.size.x * factor,
                 scene.robot.size.y * factor,
-                scene.robot.rad,
+                scene.robot.rad * 180 / Math.PI, // Convertir les radians en degrés
                 p5
             );
         } else {
@@ -268,14 +272,14 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             win.p5robot.updatePosition(
                 scene.robot.pos.x,
                 scene.robot.pos.y,
-                scene.robot.rad
+                scene.robot.rad * 180 / Math.PI // Convertir les radians en degrés
             );
             
             // Mettre à jour le facteur d'échelle
             win.p5robot.factor = factor;
         }
         
-        console.log("Robot positionné à:", scene.robot.pos.x, scene.robot.pos.y, "avec angle:", scene.robot.rad);
+        console.log("Robot positionné à:", scene.robot.pos.x, scene.robot.pos.y, "avec angle:", scene.robot.rad * 180 / Math.PI, "degrés");
         
         // Forcer le rafraîchissement de l'affichage
         if (win.p5instance && typeof win.p5instance.redraw === 'function') {
