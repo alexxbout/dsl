@@ -14,7 +14,7 @@ export const setupConfigClassic = (): UserConfig => {
             editorAppConfig: {
                 $type: "classic",
                 languageId: "robot-ml",
-                code: `// RobotML is running in the web!`,
+                code: `// RobotML is running in the web! ${CODE}`,
                 useDiffEditor: false,
                 languageExtensionConfig: { id: "langium" },
                 languageDef: monarchSyntax,
@@ -27,6 +27,14 @@ export const setupConfigClassic = (): UserConfig => {
         languageClientConfig: configureWorker(),
     };
 };
+
+const CODE = `
+let void main(){
+    Forward 100 in cm
+    Clock 90
+    Forward 100 in cm
+    Left 500 in cm
+}`;
 
 export const executeClassic = async (htmlElement: HTMLElement) => {
     const userConfig = setupConfigClassic();

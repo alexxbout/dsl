@@ -329,6 +329,8 @@ export class RobotMLInterpreter implements RobotMlVisitor {
                 return this.visitReturn(node as Return);
             case 'Loop':
                 return this.visitLoop(node as Loop);
+            case 'IfStatement':
+                return this.visitIfStatement(node as any);
             case 'FunctionCall':
                 return this.visitFunctionCall(node as FunctionCall);
             case 'Clock':
@@ -560,7 +562,15 @@ export class RobotMLInterpreter implements RobotMlVisitor {
     }
 
     visitLoop(node: Loop): any {
+        const MAX_ITERATIONS = 1000; // Prevent infinite loops
+        let iterations = 0;
+        
         while (this.visitExpression(this.castExpression(node.condition))) {
+            iterations++;
+            if (iterations > MAX_ITERATIONS) {
+                throw new Error('Maximum loop iterations exceeded - possible infinite loop detected');
+            }
+            
             this.visitBlock(this.castBlock(node.block));
             
             // If we've got a return value, exit the loop
@@ -584,6 +594,20 @@ export class RobotMLInterpreter implements RobotMlVisitor {
         const value = this.visitExpression(this.castExpression(node.value));
         this.storeVariable(node.variable.ref.name, value);
         return value;
+    }
+
+    visitIfStatement(node: any): any {
+        // Evaluate the condition
+        const condition = this.visitExpression(this.castExpression(node.condition));
+        
+        // Execute the appropriate block based on the condition
+        if (condition) {
+            return this.visitBlock(this.castBlock(node.thenBlock));
+        } else if (node.elseBlock) {
+            return this.visitBlock(this.castBlock(node.elseBlock));
+        }
+        
+        return undefined;
     }
 
     // Method to interpret a program
