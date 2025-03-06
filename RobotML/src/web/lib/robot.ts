@@ -55,22 +55,21 @@ export class Robot {
     }
   
     turn(angle: number) {
-        // Convertir l'angle en degrés
-        const angleDeg = angle;
+        // Convert angle from degrees to radians
+        const angleRad = angle * Math.PI / 180;
         
-        // Calculer le nouvel angle cible en tenant compte de l'angle actuel
-        // Utiliser l'angle actuel comme base pour éviter les rotations multiples
-        this.targetAngle = this.angle + angleDeg;
+        // Calculate target angle in radians based on current angle
+        this.targetAngle = this.angle + angleRad;
         
-        // Normaliser l'angle cible entre 0 et 360 degrés
+        // Normalize target angle between 0 and 2π radians
         while (this.targetAngle < 0) {
-            this.targetAngle += 360;
+            this.targetAngle += 2 * Math.PI;
         }
-        while (this.targetAngle >= 360) {
-            this.targetAngle -= 360;
+        while (this.targetAngle >= 2 * Math.PI) {
+            this.targetAngle -= 2 * Math.PI;
         }
         
-        console.log(`Robot: Rotation de ${angleDeg}° - Angle actuel: ${this.angle}° - Angle cible: ${this.targetAngle}°`);
+        console.log(`Robot: Rotation of ${angle}° (${angleRad.toFixed(4)} rad) - Current angle: ${this.angle} rad - Target angle: ${this.targetAngle} rad`);
         
         this.isAnimating = true;
     }
