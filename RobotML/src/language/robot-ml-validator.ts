@@ -1,5 +1,5 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import type { FunctionCall, FunctionDef, RobotMlAstType, Speed, VariableDecl } from './generated/ast.js';
+import type { FunctionCall, FunctionDef, RobotMlAstType, Speed } from './generated/ast.js';
 import { Cast, Clock, isCast, Movement } from './generated/ast.js';
 import type { RobotMlServices } from './robot-ml-module.js';
 import { registerVisitorAsValidator } from './robot-ml-visitor.js';
@@ -127,23 +127,5 @@ export class RobotMlValidator {
         if (duplicates.length > 0) {
             accept('error', `Function '${functionDef.name}' has duplicate parameter name(s): ${duplicates.join(', ')}.`, { node: functionDef });
         }
-    }
-
-    /**
-     * Vérifie que le type d'une variable est cohérent avec son initialisation.
-     * 
-     * @param variableDecl 
-     * @param accept 
-     */
-    checkVariableType(variableDecl: VariableDecl, accept: ValidationAcceptor): void {
-        // if (variableDecl.expr && variableDecl.type) {
-        //     const exprType = (variableDecl.expr as any).$type;
-        //     if (exprType === 'NumberLiteral' && variableDecl.type !== 'number') {
-        //         accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a number literal.`, { node: variableDecl });
-        //     }
-        //     if (exprType === 'BooleanLiteral' && variableDecl.type !== 'boolean') {
-        //         accept('error', `Variable '${variableDecl.name}' declared as ${variableDecl.type} but initialized with a boolean literal.`, { node: variableDecl });
-        //     }
-        // }
     }
 }
