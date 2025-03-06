@@ -81,6 +81,11 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             
             // Définir la vitesse d'animation du robot
             win.p5robot.setAnimationSpeed(0.05); // Ajuster selon la vitesse souhaitée
+            
+            // Forcer un rafraîchissement pour s'assurer que le robot est bien affiché
+            if (win.p5instance && typeof win.p5instance.redraw === 'function') {
+                win.p5instance.redraw();
+            }
         }
         
         // Exécuter les commandes séquentiellement avec animation
@@ -188,7 +193,7 @@ export function setup(client: MonacoLanguageClient, uri: string) {
                     break;
                 case 'setSpeed':
                     console.log(`Définition de la vitesse à ${command.value}`);
-                    scene.robot.speed = command.value;
+                    win.p5robot.setAnimationSpeed(command.value);
                     break;
                 default:
                     console.warn('Commande inconnue:', command);

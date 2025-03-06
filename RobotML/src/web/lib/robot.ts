@@ -60,23 +60,20 @@ export class Robot {
     }
   
     turn(angle: number) {
-        // Convert angle from degrees to radians for internal calculations
-        const angleRad = this.degreesToRadians(angle);
-        
         // Calculer le nouvel angle cible en tenant compte de l'angle actuel
         // Utiliser l'angle actuel comme base pour éviter les rotations multiples
-        this.targetAngle = this.angle + angleRad;
+        this.targetAngle = this.angle + angle;
         
         // Activer l'animation
         this.isAnimating = true;
         
-        console.log(`Robot: Tourne de ${angle} degrés, cible: ${this.targetAngle * 180 / Math.PI}°`);
+        console.log(`Robot: Tourne de ${angle} degrés, cible: ${this.targetAngle}°`);
     }
 
     move(dist: number) {
         // Calculer la position cible
-        let anglecos = Math.cos(this.angle);
-        let anglesin = Math.sin(this.angle);
+        let anglecos = Math.cos(this.degreesToRadians(this.angle));
+        let anglesin = Math.sin(this.degreesToRadians(this.angle));
         const newTargetX = this.x + anglecos * dist;
         const newTargetY = this.y + anglesin * dist;
         
@@ -92,8 +89,8 @@ export class Robot {
 
     side(dist: number) {
         // Calculer la position cible pour un déplacement latéral
-        let anglecos = Math.cos(this.angle);
-        let anglesin = Math.sin(this.angle);
+        let anglecos = Math.cos(this.degreesToRadians(this.angle));
+        let anglesin = Math.sin(this.degreesToRadians(this.angle));
         const newTargetX = this.x + -anglesin * dist;
         const newTargetY = this.y + anglecos * dist;
         
@@ -116,6 +113,8 @@ export class Robot {
         this.targetY = y;
         this.targetAngle = angle;
         
+        // Only reset animation state when explicitly called
+        // This allows the first movement to animate properly
         this.isAnimating = false;
     }
     
