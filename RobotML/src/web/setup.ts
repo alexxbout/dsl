@@ -18,6 +18,8 @@ export function setup(client: MonacoLanguageClient, uri: string) {
     const execute = (async (scene: Scene) => {
         console.info("setup : execute");
 
+        scene.resetRobot();
+
         // Envoyer directement la notification au serveur pour interprétation
         // sans essayer de récupérer le contenu du document
         client.sendNotification('custom/interpret', uri);
@@ -40,12 +42,24 @@ export function setup(client: MonacoLanguageClient, uri: string) {
             // Réinitialiser la position du robot
             const scene = win.scene as BaseScene;
             scene.resetRobot();
-            
-            // Exécuter les commandes une par une
-            executeCommands(commands, scene);
-            
-            // Mettre à jour le simulateur
-            setupSimulator(scene);
+
+            if (win.p5robot) {
+                win.p5robot.move(0);  // Cela va déclencher une animation vers la position initiale
+
+                // Attendre que l'animation de retour soit terminée avant d'exécuter les commandes
+                const checkInitialAnimation = () => {
+                    if (win.p5robot.isAnimating) {
+                        setTimeout(checkInitialAnimation, 50);
+                    } else {
+                        // Exécuter les commandes une par une
+                        executeCommands(commands, scene);
+                    }
+                };
+                checkInitialAnimation();
+            } else {
+                // Si pas de robot visuel, exécuter directement les commandes
+                executeCommands(commands, scene);
+            }
         } else {
             console.error('Erreur d\'interprétation:', result ? result.error : 'Résultat indéfini');
             // Afficher l'erreur à l'utilisateur
@@ -213,11 +227,13 @@ export function setup(client: MonacoLanguageClient, uri: string) {
     const checkAnimationComplete = (commands: any[], index: number, scene: Scene) => {
         if (win.p5robot && win.p5robot.isAnimating) {
             // L'animation est toujours en cours, vérifier à nouveau après un court délai
+            console.log(`Animation en cours pour la commande ${index + 1}, vérification dans 50ms`);
             setTimeout(() => {
                 checkAnimationComplete(commands, index, scene);
             }, 50); // Vérifier toutes les 50ms
         } else {
             // L'animation est terminée, passer à la commande suivante
+            console.log(`Animation terminée pour la commande ${index + 1}, passage à la commande suivante dans 200ms`);
             setTimeout(() => {
                 executeNextCommand(commands, index + 1, scene);
             }, 200); // Pause de 200ms entre chaque commande

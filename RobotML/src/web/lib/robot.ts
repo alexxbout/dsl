@@ -60,9 +60,11 @@ export class Robot {
     }
   
     turn(angle: number) {
+        const angleRad = this.degreesToRadians(angle);
+
         // Calculer le nouvel angle cible en tenant compte de l'angle actuel
         // Utiliser l'angle actuel comme base pour éviter les rotations multiples
-        this.targetAngle = this.angle + angle;
+        this.targetAngle = this.angle + angleRad;
         
         // Activer l'animation
         this.isAnimating = true;

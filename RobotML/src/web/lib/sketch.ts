@@ -24,7 +24,7 @@ const sketch = (p: P5) => {
         p.strokeWeight(1);
 
         for (var e = 0; e < win.entities.length; e++) {
-            (win.entities[e] as unknown as Wall).show();
+            (win.entities[e] as Wall).show();
         }
 
         if (win.p5robot !== null) {

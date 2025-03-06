@@ -9,6 +9,7 @@ export interface Scene {
     timestamps: Array<Entities.Timestamp>;
     mazinator(): void;
     clear(): void;
+    resetRobot(): void;
 }
 
 export class BaseScene implements Scene {
