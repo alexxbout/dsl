@@ -15,48 +15,6 @@ export function setup(client: MonacoLanguageClient, uri: string) {
     
     const win = window as CustomWindow;
 
-    // Modals for TypeChecking
-    var errorModal = document.getElementById("errorModal")! as HTMLElement;
-    var validModal = document.getElementById("validModal")! as HTMLElement;
-    var closeError = document.querySelector("#errorModal .close")! as HTMLElement;
-    var closeValid = document.querySelector("#validModal .close")! as HTMLElement;
-    closeError.onclick = function() {
-        errorModal.style.display = "none";
-    }
-    closeValid.onclick = function() {
-        validModal.style.display = "none";
-    }
-    window.onclick = function(event) {
-        if (event.target == validModal) {
-            validModal.style.display = "none";
-        }
-        if (event.target == errorModal) {
-            errorModal.style.display = "none";
-        }
-    } 
-
-    const typecheck = (async (input: any) => {
-        console.info('setup : typecheck');
-
-        // BONUS : Implement new semantics for typechecking
-        // Get diagnostics from the language client
-        const errors: any[] = [];
-        
-        // You can populate errors by getting diagnostics from the client
-        // For example:
-        // const result = await client.sendRequest('textDocument/diagnostics', { uri });
-        // if (result) errors.push(...result);
-        
-        if(errors.length > 0){
-            const modal = document.getElementById("errorModal")! as HTMLElement;
-            
-            modal.style.display = "block";
-        } else {
-            const modal = document.getElementById("validModal")! as HTMLElement;
-            modal.style.display = "block";
-        }
-    });
-
     const execute = (async (scene: Scene) => {
         console.info("setup : execute");
 
@@ -221,6 +179,8 @@ export function setup(client: MonacoLanguageClient, uri: string) {
 
         const scene = win.scene as BaseScene;
 
+        scene.clear();
+
         scene.mazinator();
 
         setupSimulator(scene);
@@ -326,28 +286,6 @@ export function setup(client: MonacoLanguageClient, uri: string) {
         });
     } else {
         console.warn("Bouton 'Execute Simulation' non trouvé dans le DOM");
-    }
-    
-    const restartButton = document.getElementById('Restart Simulation');
-    if (restartButton) {
-        restartButton.addEventListener('click', () => {
-            const scene = win.scene as BaseScene;
-            scene.resetRobot();
-            setupSimulator(scene);
-        });
-    } else {
-        console.warn("Bouton 'Restart Simulation' non trouvé dans le DOM");
-    }
-    
-    const clearButton = document.getElementById('Clear Data');
-    if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            const scene = win.scene as BaseScene;
-            scene.clearEntities();
-            setupSimulator(scene);
-        });
-    } else {
-        console.warn("Bouton 'Clear Data' non trouvé dans le DOM");
     }
     
     console.log("Setup terminé, simulateur initialisé");

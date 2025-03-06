@@ -10,10 +10,8 @@
         <main>
             <h1>RoboML in Langium</h1>
             <div id="buttons">
-                <input class="build" type="button" value="Mazinator" onclick="window.mazinator()">
+                <input class="build" type="button" value="Mazinator" onclick="window.mazinator(window.scene)">
                 <input class="build" type="button" value="Execute Simulation" onclick="window.execute(window.scene)">
-                <input class="build" type="button" value="Restart Simulation" onclick="window.resetSimulation()">
-                <input class="build" type="button" value="Clear Data" onclick="window.setup()">
             </div>
 
             <div id="page-wrapper">
@@ -27,35 +25,6 @@
                     <canvas id="simulator"></canvas>
                 </div>
             </div>
-
-            <div id="errorModal" class="modal">
-                <!-- Modal content -->
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span class="close">&times;</span>
-                        <h2>RoboML Type checking errors</h2>
-                    </div>
-                    <div class="modal-body"></div>
-                </div>
-            </div>
-
-            <div id="validModal" class="modal">
-                <!-- Modal content -->
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span class="close">&times;</span>
-                        <h2>RoboML Type checking validation</h2>
-                    </div>
-                    <div class="modal-body">
-                        Your code is correctly typed.
-                    </div>
-                </div>
-            </div>
-            
-            <footer>
-                <p style="font-style:italic">Powered by</p>
-                <img width="125" src="https://langium.org/assets/langium_logo_w_nib.svg" alt="Langium">
-            </footer>
     </main>
     </body>
     <script type="module">
