@@ -61,48 +61,31 @@ export class Robot implements Entities{
         // Calculer la nouvelle position
         const newPos = this.pos.plus(direction.scale(dist));
         
-        // Vérifier les collisions avec les entités de la scène
-        const canMove = this.checkCollision(newPos);
+        // Mettre à jour la position du robot
+        this.pos = newPos;
         
-        if (canMove) {
-            // Mettre à jour la position du robot
-            this.pos = newPos;
-            
-            // Enregistrer un timestamp pour cette action
-            this.scene.timestamps.push(new Timestamp(this.scene.time++, this));
-            
-            console.log(`Robot: Avance de ${dist}mm, nouvelle position: (${this.pos.x}, ${this.pos.y})`);
-            return true; // Mouvement réussi
-        } else {
-            console.log(`Robot: Collision détectée, mouvement impossible`);
-            return false; // Mouvement impossible à cause d'une collision
-        }
+        // Enregistrer un timestamp pour cette action
+        this.scene.timestamps.push(new Timestamp(this.scene.time++, this));
+        
+        console.log(`Robot: Avance de ${dist}mm, nouvelle position: (${this.pos.x}, ${this.pos.y})`);
+        return true;
     }
 
     side(dist:number) : boolean {
         // Calculer le déplacement latéral (perpendiculaire à l'orientation)
-        // Pour un déplacement latéral, on ajoute π/2 à l'angle d'orientation
         const sideDirection = Vector.fromAngle(this.rad + Math.PI/2, 1);
         
         // Calculer la nouvelle position
         const newPos = this.pos.plus(sideDirection.scale(dist));
         
-        // Vérifier les collisions avec les entités de la scène
-        const canMove = this.checkCollision(newPos);
+        // Mettre à jour la position du robot
+        this.pos = newPos;
         
-        if (canMove) {
-            // Mettre à jour la position du robot
-            this.pos = newPos;
-            
-            // Enregistrer un timestamp pour cette action
-            this.scene.timestamps.push(new Timestamp(this.scene.time++, this));
-            
-            console.log(`Robot: Déplacement latéral de ${dist}mm, nouvelle position: (${this.pos.x}, ${this.pos.y})`);
-            return true; // Mouvement réussi
-        } else {
-            console.log(`Robot: Collision détectée, mouvement impossible`);
-            return false; // Mouvement impossible à cause d'une collision
-        }
+        // Enregistrer un timestamp pour cette action
+        this.scene.timestamps.push(new Timestamp(this.scene.time++, this));
+        
+        console.log(`Robot: Déplacement latéral de ${dist}mm, nouvelle position: (${this.pos.x}, ${this.pos.y})`);
+        return true;
     }
     
     // Méthode auxiliaire pour vérifier les collisions

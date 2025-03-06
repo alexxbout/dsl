@@ -42,7 +42,10 @@ export class Robot {
         const canvasX = this.x * this.factor;
         const canvasY = this.y * this.factor;
         this.p5.translate(canvasX, canvasY);
-        this.p5.rotate(this.angle);
+        
+        // Convertir l'angle en radians pour p5.js
+        const angleRad = this.degreesToRadians(this.angle);
+        this.p5.rotate(-angleRad); // Inverser le sens de rotation pour correspondre au système de coordonnées
         
         // Draw Pacman body
         this.p5.fill(255, 255, 0); // Yellow color
@@ -60,64 +63,77 @@ export class Robot {
     }
   
     turn(angle: number) {
-        const angleRad = this.degreesToRadians(angle);
-
-        // Calculer le nouvel angle cible en tenant compte de l'angle actuel
-        // Utiliser l'angle actuel comme base pour éviter les rotations multiples
-        this.targetAngle = this.angle + angleRad;
+        // L'angle est déjà en degrés, pas besoin de conversion
+        // Calculer le nouvel angle cible en ajoutant l'angle de rotation
+        this.targetAngle = this.angle + angle;
+        
+        // Normaliser l'angle cible entre 0 et 360 degrés
+        while (this.targetAngle >= 360) {
+            this.targetAngle -= 360;
+        }
+        while (this.targetAngle < 0) {
+            this.targetAngle += 360;
+        }
         
         // Activer l'animation
         this.isAnimating = true;
         
-        console.log(`Robot: Tourne de ${angle} degrés, cible: ${this.targetAngle}°`);
+        console.log(`Robot: Tourne de ${angle} degrés, angle actuel: ${this.angle}°, angle cible: ${this.targetAngle}°`);
     }
 
     move(dist: number) {
-        // Calculer la position cible
-        let anglecos = Math.cos(this.degreesToRadians(this.angle));
-        let anglesin = Math.sin(this.degreesToRadians(this.angle));
-        const newTargetX = this.x + anglecos * dist;
-        const newTargetY = this.y + anglesin * dist;
+        // Calculer la position cible en utilisant l'angle en degrés
+        const angleRad = this.degreesToRadians(this.angle);
+        const anglecos = Math.cos(angleRad);
+        const anglesin = Math.sin(angleRad);
         
-        // Vérifier si le mouvement est possible (pas de collision)
-        // Note: Dans le contexte visuel, nous ne pouvons pas vérifier les collisions directement
-        // Nous supposons que le mouvement est possible et nous mettons à jour la cible
+        // Calculer la nouvelle position cible
+        // Note: Dans p5.js, l'axe Y est inversé par rapport au simulateur
+        const newTargetX = this.x + anglecos * dist;
+        const newTargetY = this.y - anglesin * dist;  // Inverser le signe pour correspondre à p5.js
+        
+        // Mettre à jour les coordonnées cibles
         this.targetX = newTargetX;
         this.targetY = newTargetY;
         
-        console.log(`Robot visuel: Déplacement vers (${this.targetX}, ${this.targetY})`);
+        console.log(`Robot visuel: Déplacement vers (${this.targetX}, ${this.targetY}) avec angle ${this.angle}°`);
         this.isAnimating = true;
     }
 
     side(dist: number) {
-        // Calculer la position cible pour un déplacement latéral
-        let anglecos = Math.cos(this.degreesToRadians(this.angle));
-        let anglesin = Math.sin(this.degreesToRadians(this.angle));
-        const newTargetX = this.x + -anglesin * dist;
-        const newTargetY = this.y + anglecos * dist;
+        // Pour un déplacement latéral, on ajoute 90° à l'angle actuel
+        const sideAngleRad = this.degreesToRadians(this.angle + 90);
+        const anglecos = Math.cos(sideAngleRad);
+        const anglesin = Math.sin(sideAngleRad);
         
-        // Vérifier si le mouvement est possible (pas de collision)
-        // Note: Dans le contexte visuel, nous ne pouvons pas vérifier les collisions directement
-        // Nous supposons que le mouvement est possible et nous mettons à jour la cible
+        // Calculer la nouvelle position cible
+        // Note: Dans p5.js, l'axe Y est inversé par rapport au simulateur
+        const newTargetX = this.x + anglecos * dist;
+        const newTargetY = this.y - anglesin * dist;  // Inverser le signe pour correspondre à p5.js
+        
+        // Mettre à jour les coordonnées cibles
         this.targetX = newTargetX;
         this.targetY = newTargetY;
         
-        console.log(`Robot visuel: Déplacement latéral vers (${this.targetX}, ${this.targetY})`);
+        console.log(`Robot visuel: Déplacement latéral vers (${this.targetX}, ${this.targetY}) avec angle ${this.angle}°`);
         this.isAnimating = true;
     }
 
     updatePosition(x: number, y: number, angle: number) {
-        this.x = x;
-        this.y = y;
-        this.angle = angle;
-        
-        this.targetX = x;
-        this.targetY = y;
-        this.targetAngle = angle;
-        
-        // Only reset animation state when explicitly called
-        // This allows the first movement to animate properly
-        this.isAnimating = false;
+        // Si une animation est en cours, ne pas interrompre brutalement
+        if (this.isAnimating) {
+            this.targetX = x;
+            this.targetY = y;
+            this.targetAngle = angle;
+        } else {
+            // Si pas d'animation en cours, mettre à jour directement
+            this.x = x;
+            this.y = y;
+            this.angle = angle;
+            this.targetX = x;
+            this.targetY = y;
+            this.targetAngle = angle;
+        }
     }
     
     updateAnimation() {
